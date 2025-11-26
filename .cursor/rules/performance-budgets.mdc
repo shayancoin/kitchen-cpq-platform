@@ -32,7 +32,7 @@ safely inside the budgets.
 
 1. **Identity / initial shell load**
 
-   - Target: backend P95 < **50 ms** (excluding browser rendering). :contentReference[oaicite:2]{index=2}  
+   - Target: backend P95 < **50 ms** (excluding browser rendering).
    - `auth.getSession` + `tenancy.getCurrentTenant` combined P95 ≤ **45 ms**.
    - When changing auth/tenancy code: keep DB queries O(1) per request and index-backed.
 
