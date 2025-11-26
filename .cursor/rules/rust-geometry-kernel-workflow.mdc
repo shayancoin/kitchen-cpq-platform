@@ -1,7 +1,5 @@
 ---
-alwaysApply: true
----
----
+alwaysApply: false
 description: >
   Govern how the Rust-based geometry-kernel is structured, compiled to WASM, and
   consumed by TypeScript services and the 3D client.
@@ -9,7 +7,6 @@ globs:
   - "packages/geometry-kernel/src/**/*.rs"
   - "packages/geometry-kernel/pkg/**/*.{ts,js}"
   - "services/param-kernel-service/src/**/*.ts"
-alwaysApply: false
 ---
 
 # Rust / WASM Geometry Kernel Workflow
