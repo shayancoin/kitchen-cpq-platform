@@ -1,0 +1,60 @@
+---
+alwaysApply: true
+---
+# Deployment & Infrastructure Rules
+
+## Environments
+
+- At minimum: `dev`, `staging`, `prod`.
+
+- No direct deploys to `prod` from developer machines; all production changes go through CI/CD pipelines in `infra/ci-cd`.   
+
+## Kubernetes
+
+- All services in `services/` are deployed as containers into Kubernetes (EKS/GKE/AKS).
+
+- K8s manifests live under `infra/k8s`:
+
+  - `base/` for shared infrastructure (Kafka, Temporal, Postgres).
+  - `services/` for individual deployments.
+  - `ingress/` for public entrypoints.   
+
+- No direct `kubectl apply` of ad‑hoc YAML in production; changes must be committed to `infra/`.
+
+## Observability
+
+- Standard stack:
+
+  - Prometheus for metrics, Loki for logs, Grafana for dashboards (see `infra/observability`).   
+
+- OpenTelemetry instrumentation lives in `libs/instrumentation-otel` and must be imported into all TS services. :contentReference[oaicite:40]{index=40}  
+
+- Every new service must export at least:
+
+  - Request latency histograms per endpoint.
+  - Error rate.
+  - Key business throughput metrics.
+
+## Secrets & configuration
+
+- No secrets in source control.
+
+  - Use environment variables + secret manager (e.g. SSM/Secrets Manager).
+
+- Config is 12‑factor style:
+
+  - All environment‑specific values are provided through env vars or K8s config maps.
+
+## Rollouts
+
+- Use rolling updates or blue‑green deployments for stateful services.
+
+- For high‑risk changes to core engines (parametric kernel, CAD/CAM, CPQ), use canary deployments + shadow traffic when possible.
+
+## Resource constraints
+
+- For CPU‑bound services (optimization, geometry, CAD/CAM):
+
+  - Set resource requests/limits explicitly.
+  - Use autoscaling based on CPU and/or queue depth (KEDA where applicable).   
+

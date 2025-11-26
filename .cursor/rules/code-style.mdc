@@ -1,0 +1,75 @@
+---
+alwaysApply: true
+---
+# Code Style Rules
+
+## Languages
+
+- TypeScript is the primary language for:
+
+  - Next.js app (`apps/frontend`),
+  - NestJS services,
+  - Shared libs and UI packages.
+
+- Python is used for optimization/analytics services.
+- Rust is used for the geometry kernel and high‑performance compute.
+- No new code in plain JavaScript unless absolutely necessary (e.g. upstream constraints).
+
+## TypeScript
+
+- TS strict mode: `strict: true`, `noImplicitAny: true`, `noUncheckedIndexedAccess: true`.
+
+- Use **ES2020+** features; target Node 20 / modern browsers.
+
+- Prefer **type aliases** for domain primitives with brands (e.g. `ProjectId`, `TenantId`) as in `libs/shared-types`.   
+
+- No `any` / `unknown` without justification; wrap external payloads in Zod schemas in `libs/shared-validation`. :contentReference[oaicite:32]{index=32}  
+
+- Imports:
+
+  - Use TS path aliases (`@app/...`, `@lib/...`, `@pkg/...`) defined in `tsconfig.base.json`.
+  - No relative imports that traverse more than two levels (`../../..`).
+
+## NestJS
+
+- Controllers are thin: they call **application services** which call **domain services**.
+
+- Avoid putting business logic into controllers or ORMs directly.
+
+- Use dependency injection; no singletons outside Nest’s DI container.
+
+## React
+
+- Use function components + hooks only.
+
+- Components should be pure and small; containers orchestrate data fetching via hooks.
+
+- Keep presentational components in `packages/ui-kit` and page logic in `apps/frontend`.
+
+## Python
+
+- Follow `black` + `isort` + `ruff` defaults for formatting and linting.
+
+- Type hints are mandatory for public functions; enable `mypy` in CI for Python libs.
+
+## Rust
+
+- Enforce `#![forbid(unsafe_code)]` at crate root unless explicitly justified.
+
+- Use `cargo fmt` + `cargo clippy` with `-D warnings`.
+
+## General
+
+- All new code paths must have tests:
+
+  - Unit tests for domain logic (Jest for TS, pytest for Python, cargo test for Rust).
+  - Integration tests for service endpoints where feasible.
+
+- Comments should explain **why**, not **what**.
+
+- For public APIs (tRPC/gRPC), always document:
+
+  - Purpose,
+  - Expected latency budget,
+  - Error semantics.
+
