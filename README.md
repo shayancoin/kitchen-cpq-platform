@@ -1,3 +1,4 @@
+````md
 # kitchen-cpq-platform
 
 > Frontier, high‑performance, end‑to‑end **3D kitchen CPQ + CAD‑to‑CNC** platform.  
@@ -35,7 +36,17 @@ Performance design targets (from the architecture docs):
 - Layout + repricing recomputation **≤ 100 ms (P95)**.
 - 60 FPS 3D camera, thousands of concurrent active planners per region.   
 
----
+  services/          # Domain microservices (NestJS, FastAPI, Temporal, Rust)
+    identity-tenancy-service/
+    catalog-rules-service/
+    configurator-session-service/
+    cpq-pricing-service/
+    cad-cam-dfm-service/
+    optimization-engine-service/
+    workflow-orchestration-service/
+    integrations/
+      crm-salesforce/
+      erp-sap/
 
 ## 2. High‑level architecture
 
