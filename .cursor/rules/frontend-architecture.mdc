@@ -1,0 +1,79 @@
+---
+alwaysApply: true
+---
+# Frontend Architecture Rules
+
+## Apps & packages
+
+- Main frontend app: `apps/frontend`  
+
+  - Next.js 16 (App Router) + React 19.
+  - Multi‑tenant shell based on **Vercel Platforms**.
+  - CPQ/CRM dashboard UX based on **Studio Admin** template.   
+
+- It consumes:
+
+  - `packages/ui-kit` — shadcn/Tailwind UI primitives + CPQ/manufacturing components.
+  - `packages/3d-engine` — Babylon 8 WebGPU kitchen scene.
+  - `packages/configurator-sdk` — embeddable `<kitchen-configurator>` for external e‑com.   
+
+## Routing & layout
+
+- Use a **three‑pane layout** for configure pages:
+
+  - Left: project/variant navigation + constraint/CPQ badges.
+  - Center: Babylon.js 3D view.
+  - Right: properties & AI copilot.   
+
+- Tenant awareness:
+
+  - Tenant context derived from subdomain or path as in `vercel/platforms`.
+  - All pages must pull the current tenant through a central hook (`useTenant`) wired to tRPC.
+
+- Use route groups:
+
+  - `(public)` — marketing and anonymous experiences.
+  - `(consumer)` — consumer configurator flows.
+  - `(dealer)` — dealer CPQ/quotes.
+  - `(admin)` — catalog, manufacturing, system admin. :contentReference[oaicite:25]{index=25}  
+
+## State management
+
+- **Server state:** TanStack Query; all network I/O should go through tRPC client wrappers in `libs/shared-trpc` and be cached via Query.   
+- **Local/UI state:** Zustand or Jotai for view‑local state; avoid Redux.
+- 3D scene state:
+
+  - Babylon scene data is owned by `packages/3d-engine`.
+  - React components talk to the engine via a narrow imperative API (`createKitchenScene`, `updateConfiguration`).   
+
+## 3D rendering
+
+- 3D engine rules:
+
+  - Use Babylon 8 WebGPU template from `bp800` as the baseline; do not re‑implement core engine logic in the app.   
+  - Heavy geometry work must run in Web Workers + WASM; main thread is limited to scene graph updates and interaction.
+
+- React integration:
+
+  - Prefer thin wrappers around imperative engine APIs.
+  - `react-babylonjs` can be used only in non‑critical, UI‑heavy overlays; it must not own the main kitchen scene.   
+
+## tRPC usage
+
+- All frontend↔backend calls use the shared tRPC client:
+
+  - Router definitions live in `libs/shared-trpc`.
+  - No inline `fetch`/Axios calls in React components (except for public, cacheable assets).
+
+- When adding a new interaction:
+
+  1. Add procedure in shared tRPC router.
+  2. Implement resolver in `apps/api`.
+  3. Use typed hook (`api.X.useQuery/useMutation`) in the frontend.
+
+## UI consistency
+
+- All components must come from `packages/ui-kit` or extend them; no raw Tailwind in page components beyond layout glue.
+
+- CPQ‑specific widgets (e.g. `QuoteTable`, `MarginBadge`, `ConstraintBadge`, `CncJobCard`) must live under `packages/ui-kit/src/components`.   
+

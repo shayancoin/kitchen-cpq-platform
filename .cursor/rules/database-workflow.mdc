@@ -1,0 +1,70 @@
+---
+alwaysApply: true
+---
+# Database & Data Workflow Rules
+
+## Stores
+
+- OLTP:
+
+  - **PostgreSQL** is the default transactional store for all business entities (tenants, users, projects, quotes, orders, jobs, catalog metadata).   
+
+- Catalog & rules:
+
+  - Catalog metadata + rules in Postgres (separate logical DB/cluster).
+  - Immutable **catalog snapshots** stored as JSON in object storage (S3) with references kept in `CatalogVersion` records.   
+
+- Caching:
+
+  - Redis for ephemeral, high‑speed caches (sessions, configuration snapshots, layout variants).
+
+- Search:
+
+  - OpenSearch/Meilisearch for catalog search, if needed (implemented via dedicated service).
+
+- Files:
+
+  - Object storage for CAD artifacts (glTF, STEP, DXF), PDFs, CNC programs.
+
+## Access patterns
+
+- NestJS services **must not** access databases directly from controllers.
+
+  - Use repository pattern and domain services as per `ack-nestjs-boilerplate-kafka`.   
+
+- No cross‑service DB access:
+
+  - Each service owns its schema.
+  - Cross‑service reads go through RPC or event projections.
+
+- Every write that changes business state should:
+
+  - Update the OLTP DB.
+  - Emit a Kafka event with the new state (or a snapshot reference).
+
+## Schema management
+
+- TS/Node:
+
+  - Use Prisma or TypeORM **only in service‑local layers**; never leak ORM types out of the service boundary.
+
+- Migrations:
+
+  - Stored in `infra/databases` or per‑service `migrations` folders.
+  - Managed via CI pipeline (no manual ad‑hoc migrations in production).
+
+- Backward compatibility:
+
+  - Always add columns with defaults; deprecate, then remove in two releases.
+  - For breaking schema changes, implement dual‑read or dual‑write patterns when necessary.
+
+## Data correctness
+
+- Configuration, catalog and manufacturing state must be reproducible:
+
+  - Quotes and orders reference **catalog snapshot IDs**; you must never recompute them against a newer catalog without explicit migration logic.   
+
+- Use database transactions around multi‑row writes that must be atomic; otherwise, orchestrate via Temporal with idempotent activities.
+
+- Idempotency keys are required for any externally visible operation that can be retried (webhooks, checkout callbacks).
+

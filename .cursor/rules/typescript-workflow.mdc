@@ -1,0 +1,65 @@
+---
+alwaysApply: true
+---
+# TypeScript Workflow Rules
+
+## Workspace
+
+- Monorepo managed by Nx (and optionally Turborepo) with pnpm:
+
+  - Root `tsconfig.base.json` defines base compiler options and path aliases.
+  - All TS projects must reference this base config.   
+
+## Project boundaries
+
+- Each leaf under `apps/`, `services/`, `libs/`, `packages/` is a TS project with:
+
+  - Its own `project.json` (Nx) or framework config.
+  - Local `tsconfig.json` extending from base.   
+
+- No circular dependencies between libs; use Nx tags/enforcement.
+
+## Build & lint
+
+- Use:
+
+  - `tsc --noEmit` for type‑checking.
+  - `eslint` with a shared config for all TS projects.
+  - `prettier` for formatting.
+
+- All TS code must build with zero type errors before merging.
+
+## Runtime targets
+
+- Node:
+
+  - Target Node 20; use native ESM where appropriate.
+
+- Browser:
+
+  - Target modern evergreen browsers with WebGPU/WebGL2 support; rely on Next.js defaults for transpilation.
+
+## Specific domains
+
+- **Shared types** (`libs/shared-types`):
+
+  - Contains only TS type aliases, interfaces, branded primitive types.
+  - No runtime side‑effects.
+
+- **Shared validation** (`libs/shared-validation`):
+
+  - Zod schemas mirroring shared types; use for decoding external inputs and validating persisted data. :contentReference[oaicite:44]{index=44}  
+
+- **Shared tRPC** (`libs/shared-trpc`):
+
+  - Router definitions and tRPC client setup.
+  - Frontend must import routers from here; services must not redefine them.   
+
+- **UI kit** (`packages/ui-kit`):
+
+  - Pure React components + Tailwind/shadcn tokens; no backend imports.
+
+- **3D engine** (`packages/3d-engine`):
+
+  - Babylon engine code compiled via Vite; consumed as a package by the Next.js app.
+

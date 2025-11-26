@@ -1,0 +1,86 @@
+---
+alwaysApply: true
+---
+# Backend Architecture Rules
+
+## High‑level structure
+
+- All backend code is organized into:
+
+  - `apps/api` — NestJS API gateway & tRPC BFF.
+  - `services/*` — domain microservices (NestJS TS, FastAPI Python, Rust binaries).
+  - `libs/*` — domain logic and shared TS utilities.
+  - `packages/proto-defs` — proto files + generated gRPC stubs.
+  - `infra/*` — K8s manifests, Terraform modules.   
+
+## Service boundaries
+
+- Each folder under `services/` is a **single deployable unit** (Docker image).
+- Services must align with domain capabilities:
+
+  - `identity-tenancy-service`
+  - `catalog-rules-service`
+  - `configurator-session-service`
+  - `cpq-pricing-service`
+  - `param-kernel-service`
+  - `optimization-engine-service`
+  - `cad-cam-dfm-service`
+  - `workflow-orchestration-service` (Temporal)
+  - `ai-agent-service`
+  - `integrations/*` (CRM/ERP/e‑com)   
+
+- No cross‑domain business logic inside another domain’s service; reuse via `libs/domain-*`.
+
+## Communication patterns
+
+- **Frontend → backend:** Only via **tRPC** exposed by `apps/api`. No direct calls to individual services from the browser.   
+- **Gateway → services:** Use **gRPC** for synchronous calls on latency‑critical paths, e.g.:
+
+  - `ParametricKernelService`
+  - `CpqService`
+  - `OptimizationService`
+  - `CadCamService`   
+
+- **Service → service (async):** Use **Kafka** topics for domain events, and Temporal workflows for long‑running processes.   
+
+- Never introduce ad‑hoc HTTP between services without adding proto + stubs; if you need HTTP, add it behind the API gateway.
+
+## Shared types & contracts
+
+- All shared TS types live in `libs/shared-types`. If you need a type across services, add it there and import; do **not** re‑declare.   
+- gRPC contracts must be defined in `packages/proto-defs/protos/*.proto` and generated into `gen/ts`, `gen/py`, `gen/rs`.   
+
+- When adding new RPCs:
+
+  1. Define proto in `packages/proto-defs`.
+  2. Regenerate stubs via `tools/scripts/generate-protos.ts`.
+  3. Wire NestJS/FastAPI implementations using the generated interfaces.
+
+## Latency budgets
+
+- Respect P95 budgets defined in `data-contracts-tRPC-gRPC-latency`:
+
+  - Critical interactive path (`mutateParameters` + CPQ): **L_total^P95 ≤ 150 ms** backend+network.   
+  - Identity/session load path: P95 backend **≤ 50 ms**. :contentReference[oaicite:18]{index=18}  
+
+- Any new synchronous RPC on the critical path must:
+
+  - Document its P95 budget.
+  - Be added to latency tests in `tools/scripts/check-latency-budgets.ts`.   
+
+## Implementation rules
+
+- NestJS services:
+
+  - Use the patterns and modules from `ack-nestjs-boilerplate-kafka` for Kafka integration and configuration.   
+  - Each service has `src/domain`, `src/app`, `src/infra` layers; no direct DB access from controllers.
+
+- Python services:
+
+  - Use `onlythompson/fastapi-microservice-template` structure (routers, services, repositories).   
+
+- Rust binaries:
+
+  - Are pure computation services (geometry, DFM, CNC); they expose gRPC or are embedded in Nest/FastAPI via FFI.
+  - All FFI boundaries must be encapsulated in a single module; no scattering of `unsafe` across the codebase.
+
