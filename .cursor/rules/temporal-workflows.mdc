@@ -1,7 +1,4 @@
 ---
-alwaysApply: true
----
----
 description: >
   Standardize use of Temporal for long-running workflows such as quote lifecycle
   and manufacturing pipelines.
@@ -9,7 +6,7 @@ globs:
   - "services/workflow-orchestration-service/src/**/*.ts"
   - "services/**/src/workflows/**/*.ts"
   - "libs/shared-types/src/workflow.ts"
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Temporal Workflows & Long-Running Processes
@@ -36,24 +33,47 @@ Avoid implementing these as naked queues or chained cron jobs.
   - Idempotent.
   - Retry-safe.
   - Bounded in time (seconds, not minutes).
+- Activity options: set explicit `startToCloseTimeout` and `scheduleToCloseTimeout` on every activity. Defaults: compute-heavy (geometry/pricing) `startToClose` 30s, `scheduleToClose` 2m; I/O to remote services 10s/30s; cache lookups 3s/10s. Override per activity based on SLOs.
+- Idempotency enforcement: derive a deterministic idempotency key (e.g., `workflowId + activityName + payload hash`), store results in the activity or upstream service, and make activities side-effect free on retries (dedupe writes, memoize uploads, versioned resources).
+- Retry policy: exponential backoff (`initialInterval` 1s, `backoffCoefficient` 2.0, `maxInterval` 15s, `maxAttempts` 5) with non-retryable errors for validation/permission/domain conflicts; emit retry metrics (see Observability) and short-circuit on obviously invalid inputs.
+- Example (TS):
+
+```ts
+const options = {
+  startToCloseTimeout: Duration.ofSeconds(30),
+  scheduleToCloseTimeout: Duration.ofMinutes(2),
+  retryPolicy: {
+    initialInterval: '1s',
+    backoffCoefficient: 2,
+    maximumInterval: '15s',
+    maximumAttempts: 5,
+    nonRetryableErrorTypes: ['ValidationError', 'PermissionDenied'],
+  },
+};
+```
 
 ## 3. API Boundaries
 
-- External entrypoint: e.g. `WorkflowService.StartOrderWorkflow` which kicks off
-  `KitchenOrderWorkflow`. :contentReference[oaicite:12]{index=12}  
-- Front-end receives:
-  - Immediate acknowledgement (workflow instance ID) within < 200 ms.
-  - Status updates via polling, push, or event streams.
+- External entrypoint: `WorkflowService.StartOrderWorkflow` kicks off `KitchenOrderWorkflow`.
+- Acknowledgement target: **≤ 150 ms** for the ACK path (critical user feedback). Update `tools/scripts/check-latency-budgets.ts` to assert this for `WorkflowService.StartOrderWorkflow`.
+- Status updates: prefer **event streams** (Kafka topic `workflow.status` or equivalent). Payload includes workflowId, runId, status, timestamp, projectId/tenantId, optional errorCode/errorMessage. Guarantee at-least-once delivery with idempotent consumers; include schema version for compatibility. Avoid polling unless required for legacy clients.
+- Status propagation SLA: eventual consistency window 1–5 s. Cache invalidation triggers when a status event is published; API responses must not serve stale cached statuses beyond this window.
 
 ## 4. Versioning & Changes
 
-- When changing workflow logic:
-  - Use Temporal’s versioning features; never break in-flight workflows.
-  - Keep workflow IDs and version tags in shared types.
+- Use Temporal’s versioning APIs to avoid breaking in-flight workflows:
+  - TypeScript: `patched('feature-flag')` / `deprecatePatch('feature-flag')` around changed branches.
+  - Go/Java: `GetVersion` with min/max versions around any change that affects determinism.
+  - Wrap **all** activity/timer/child-workflow signature changes or branching logic with version checks.
+- Draining strategy: keep old branches until visibility/search attributes show zero executions on the old version; then remove after a retention window.
+- Replay testing: run workflow replays against production histories before deploy; ensure both old and new code paths pass.
+- Example (adding an activity): guard the new activity call with `patched('add-new-activity')`, keep the old path inside the `!patched` branch, and remove once no executions remain on the old patch.
+- Reference: Temporal SDK docs for TS/Go/Java versioning patterns (link in `docs/temporal-versioning.md`).
 
 ## 5. Observability
 
-- Every workflow must:
-  - Emit events for major transitions (created, running, completed, failed).
-  - Attach tenant, user, and project IDs to all events and spans (never log sensitive data).
-  - Expose metrics: active workflows, success/failure counts, duration histograms.
+- Events: emit `workflow.events` with schema `{workflowId, workflowType, status, timestamp (ISO8601), projectId, tenantId, runId, attempt, errorCode?, errorMessage?, schemaVersion}`; serialize as JSON with schema versioning. Attach tenant, user, and project IDs to all events and spans (never log sensitive data).
+- Metrics: Prometheus-style namespace `temporal_workflow_*` (e.g., `temporal_workflow_duration_seconds_bucket/_sum/_count` with labels `workflow_type`, `status`, `project_id`; avoid high-cardinality labels like user_id). Include retry counters, failure reasons, and track active workflows, success/failure counts, duration histograms.
+- Destinations: primary Kafka topic `cursor.temporal.workflows.events` or OTLP exporter; fallback to structured JSON logs with the same schema.
+- Cardinality rule: only stable, low-cardinality labels; aggregate per-tenant where possible.
+- Cross-reference: see `.cursor/rules/observability-otel.mdc` for span/metric conventions and examples.

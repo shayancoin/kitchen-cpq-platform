@@ -11,7 +11,8 @@ alwaysApply: true
 
 - Catalog & rules:
 
-  - Catalog metadata + rules in Postgres (separate logical DB/cluster).
+  - Catalog metadata + rules in a logical Postgres cluster (global schema with tenant_id
+    partitioning via RLS, or isolated cluster per tenant—specify strategy).
   - Immutable **catalog snapshots** stored as JSON in object storage (S3) with references kept in `CatalogVersion` records.   
 
 - Caching:
@@ -50,7 +51,8 @@ alwaysApply: true
 
 - Migrations:
 
-  - Stored in `infra/databases` or per‑service `migrations` folders.
+  - Stored in `infra/databases/migrations/<service-name>/` (centralized governance).
+    Per-service migrations are forbidden to prevent schema drift and simplify CD pipeline ordering.
   - Managed via CI pipeline (no manual ad‑hoc migrations in production).
 
 - Backward compatibility:
@@ -62,9 +64,43 @@ alwaysApply: true
 
 - Configuration, catalog and manufacturing state must be reproducible:
 
-  - Quotes and orders reference **catalog snapshot IDs**; you must never recompute them against a newer catalog without explicit migration logic.   
+- Quotes/orders must **never** be recomputed against a newer catalog snapshot once created:
+  - Schema: store immutable `catalog_version`/`catalog_snapshot_id` on quotes/orders with a constraint that rejects changes on UPDATE. Use a CHECK for presence/shape and a **mandatory** BEFORE UPDATE trigger to enforce immutability.
+    - CHECK example (verify non-null + format, enforced at DB as last defense even if service validation exists):
+      - UUID pattern: `ALTER TABLE quotes ADD CONSTRAINT quotes_catalog_snapshot_check CHECK (catalog_snapshot_id IS NOT NULL AND catalog_snapshot_id ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$');`
+      - If using SHA-256 hex IDs: use `~ '^[0-9a-fA-F]{64}$'` instead.
+      - For reuse, define a domain: `CREATE DOMAIN snapshot_id AS text CHECK (VALUE ~ '^[0-9a-fA-F]{64}$');` and apply to `catalog_snapshot_id` columns.
+    - Trigger (required) to reject any change:
+      ```sql
+      CREATE OR REPLACE FUNCTION prevent_catalog_snapshot_change()
+      RETURNS trigger AS $$
+      BEGIN
+        IF OLD.catalog_snapshot_id IS DISTINCT FROM NEW.catalog_snapshot_id THEN
+          RAISE EXCEPTION 'catalog_snapshot_id is immutable';
+        END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
 
-- Use database transactions around multi‑row writes that must be atomic; otherwise, orchestrate via Temporal with idempotent activities.
+      CREATE TRIGGER quotes_catalog_snapshot_immutable
+        BEFORE UPDATE ON quotes
+        FOR EACH ROW
+        EXECUTE FUNCTION prevent_catalog_snapshot_change();
+      ```
+    - Optional: computed integrity check. If you add a validation column, define it explicitly:
+      - Example: `checksum` as `GENERATED ALWAYS AS (encode(digest(catalog_snapshot_id || '|' || catalog_version || '|' || created_at::text, 'sha256'), 'hex')) STORED`.
+      - Fields included: `catalog_snapshot_id`, `catalog_version`, `created_at` (adjust to your canonical fields).
+      - Usage: service layer reads the checksum and compares to a recomputed value on read paths; a periodic audit job scans for mismatches and alerts if any are found.
+      - Trigger interaction: the BEFORE UPDATE immutability trigger still runs first; checksum is recomputed automatically by Postgres on any write that changes source fields. Do not attempt to update the checksum directly (it is read-only).
+    - Apply the same constraint/trigger pattern to orders, `CatalogVersion`, and any tables referencing the snapshot ID (e.g., `quote_items`, `order_lines`, `manufacturing_jobs`).
+  - Service/runtime: every operation must verify the requested catalog snapshot matches the persisted ID; mismatch → validation error and audit log entry.
+  - Process controls: add this check to code-review checklists, unit/integration tests that attempt to swap snapshot IDs, and a CI policy check that fails if code removes/bypasses the invariant. Tests must include an `UPDATE quotes SET catalog_snapshot_id = <new_id> WHERE quote_id = X` vector that asserts the DB raises a validation error and the stored ID remains unchanged.
+  - Auditing/observability:
+    - Audit sink: write to `audit.catalog_snapshot_guard` table with fields `{event_type, tenant_id, user_id, quote_id, attempted_snapshot_id, persisted_snapshot_id, error_code, timestamp, context JSONB}`.
+    - Kafka event: emit to topic `catalog.snapshot.guard` with schema `{event_id, idempotency_key, event_type, tenant_id, user_id, quote_id, attempted_snapshot_id, persisted_snapshot_id, error_code, timestamp, context}`; configure retry with DLQ and idempotent consumers.
+  - CI: migration policy must scan diffs for DDL that drops/weakens snapshot constraints/triggers (regex for `DROP CONSTRAINT`, `DROP TRIGGER`, or `ALTER TABLE .* catalog_snapshot`) and fail the build; reviewers must confirm no code path bypasses the invariant and that rejected attempts are logged + emit the Kafka event above.
+
+- Use database transactions around multi‑row writes that must be atomic; otherwise,
+  orchestrate via Temporal with idempotent activities (see temporal-workflows.mdc).
 
 - Idempotency keys are required for any externally visible operation that can be retried (webhooks, checkout callbacks).
-

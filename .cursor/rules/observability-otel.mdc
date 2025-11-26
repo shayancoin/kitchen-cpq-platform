@@ -12,14 +12,11 @@ globs:
 # Observability & OpenTelemetry
 
 All TypeScript services must use the shared OpenTelemetry helpers in
-`libs/instrumentation-otel` for tracing, metrics, and structured logging. :contentReference[oaicite:5]{index=5}  
+`libs/instrumentation-otel` for tracing, metrics, and structured logging.  
 
 ## 1. Tracing
 
-- Every externally reachable handler **must** start or join a span:
-  - HTTP (tRPC / REST) handlers in `apps/api`.
-  - gRPC handlers in NestJS services.
-  - Temporal activities/workflows.
+- Every externally reachable handler **must** start or join a span. “External” means: any HTTP endpoint in `apps/api` (tRPC and REST), any publicly exposed gRPC handler in NestJS services, any Temporal workflow/activity invoked by external or cross-service triggers, and any message/queue consumer that accepts requests from outside the service boundary. Internal-only helpers (private functions, internal cron jobs) are exempt but should propagate spans if they call remote services.
 - Span naming convention:
   - `ServiceName.MethodName` (e.g. `ConfiguratorSession.ApplyDelta`,
     `Cpq.PriceDelta`, `CadCam.GenerateArtifacts`).
@@ -53,5 +50,8 @@ When creating a new service under `services/`:
 
 1. Wire the OpenTelemetry SDK from `libs/instrumentation-otel`.
 2. Add basic HTTP/gRPC middleware to start spans and record latency.
-3. Expose a `/health` endpoint and at least one metrics endpoint (or OTLP export).
+3. Expose:
+   - `/health` endpoint (HTTP 200 if service is operational).
+   - `/metrics` endpoint (Prometheus exposition format) for internal scraping.
+   - OTLP gRPC exporter (optional, for centralized tracing backend).
 4. Add a minimal Grafana dashboard for the service (latency, errors, throughput).

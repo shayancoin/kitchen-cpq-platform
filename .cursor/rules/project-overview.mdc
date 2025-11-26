@@ -31,7 +31,7 @@ We optimize for these flows:
 
    - User drags/edits a cabinet in the 3D view.
    - Browser → tRPC → BFF (`apps/api`) → Parametric Kernel Service → CPQ Service.
-   - Parametric constraints + pricing update within **P95 ≤ 150 ms** (including render).   
+   - Parametric constraints + pricing update within **P95 ≤ 150 ms** (backend + network only; render budget tracked separately). See `.cursor/rules/backend-architecture.mdc` for the canonical allocation.   
 
 2. **Sale → Factory**
 
@@ -43,12 +43,12 @@ We optimize for these flows:
 
    - Catalog engineers define products, parameters, rules and tests in admin tooling.
    - Changes go through: draft → validation → review → staged → production.
-   - Catalog snapshots are immutable and versioned.   
+   - Catalog snapshots are immutable and versioned; enforcement combines a state machine in `services/catalog-rules-service` (transitions, validations, immutable snapshot creation, audit logging), GitHub branch protection + PR review rules for human approvals, and CI/CD gates that block promotion to staged/production without passing pipeline checks. Required artifacts: audit log entries, versioned snapshot IDs, validation reports. Specs: `services/catalog-rules-service/docs/state-transition-spec.md` and `tools/ci/catalog-workflow-policy.md`.   
 
 ## Architectural Invariants
 
-- **Single source of truth:** Canonical parametric state and catalog types live in `libs/shared-types` and are reused across all services and the front‑end.   
-- **Engines over AI:** Parametric kernel, CP‑SAT optimizers, and CAD/CAM services are authoritative. AI/LLM layers may only suggest deltas or macros; deterministic engines must validate.   
+- **Single source of truth:** Canonical parametric state and catalog types live in `libs/shared-types` and are reused across all services and the front‑end. Enforcement: tooling/CI disallow local redefinitions—add ESLint/TS `no-restricted-imports`/custom rule to forbid shadowing canonical type names and require imports from `libs/shared-types`; add a CI script that scans for duplicate type/interface names matching canonical types and fails on matches; update CONTRIBUTING/PR checklist to require reviewers to confirm no local clones of canonical types and wire the new lint/CI checks into repository config.   
+- **Engines over AI:** Parametric kernel, CP‑SAT optimizers, and CAD/CAM services are authoritative. AI/LLM layers may only suggest deltas or macros; deterministic engines must validate. Enforcement: define API boundaries where AI services expose only suggestion endpoints returning immutable diff objects (no direct state mutation); deterministic engines run validation middleware that rejects unvalidated deltas and emits audit logs; enforce RBAC/network policies to block AI services from DB write endpoints; add CI/code-review checks and integration tests that assert suggestions pass through validator calls (e.g., required headers, response contract, audit/log expectations) before applying changes.   
 - **Event‑driven:** Cross‑service communication uses Kafka topics + Temporal workflows; direct synchronous calls are via gRPC or tRPC only where latency budgets require it.   
 - **Latency budgets are explicit:** Each critical RPC/tRPC call has a P95 budget and must be measured in CI.   
 
@@ -56,4 +56,3 @@ When in doubt, choose the option that:
 1. Preserves canonical types and deterministic behavior.
 2. Keeps P95 latency under budget.
 3. Minimizes cross‑service coupling.
-
