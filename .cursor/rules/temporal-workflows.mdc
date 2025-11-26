@@ -55,4 +55,5 @@ Avoid implementing these as naked queues or chained cron jobs.
 
 - Every workflow must:
   - Emit events for major transitions (created, running, completed, failed).
+  - Attach tenant, user, and project IDs to all events and spans (never log sensitive data).
   - Expose metrics: active workflows, success/failure counts, duration histograms.
