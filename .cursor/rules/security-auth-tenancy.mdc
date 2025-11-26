@@ -1,7 +1,5 @@
 ---
 alwaysApply: true
----
----
 description: >
   Enforce consistent authentication, authorization, and tenant isolation for all apps
   and services.
@@ -11,7 +9,6 @@ globs:
   - "services/**/src/**/*.ts"
   - "libs/shared-auth/src/**/*.ts"
   - "libs/shared-types/src/user.ts"
-alwaysApply: true
 ---
 
 # Security, Auth & Tenancy
