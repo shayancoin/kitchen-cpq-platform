@@ -1,11 +1,5 @@
-[project[project.optional-dependencies]
-dev = [
-  "pytest>=8.3.0",
-  "black>=24.10.0",
-  "isort>=5.13.0",
-  "ruff>=0.7.0",
-  "mypy>=1.13.0"
-]name = "optimization-engine-service"
+[project]
+name = "optimization-engine-service"
 version = "0.0.1"
 description = "FastAPI + OR-Tools layout optimization service (skeleton)."
 requires-python = ">=3.10"

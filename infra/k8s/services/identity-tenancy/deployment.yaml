@@ -57,7 +57,7 @@ metadata:
   name: identity-tenancy-service-pdb
   namespace: kitchen-cpq
 spec:
-  minAvailable: 2
+  minAvailable: 1
   selector:
     matchLabels:
       app: identity-tenancy-service

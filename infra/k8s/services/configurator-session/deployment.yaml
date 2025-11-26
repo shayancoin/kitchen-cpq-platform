@@ -18,6 +18,13 @@ spec:
           image: kitchen-cpq/configurator-session-service:v1.0.0
           ports:
             - containerPort: 3013
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
           resources:
             requests:
               cpu: "500m"

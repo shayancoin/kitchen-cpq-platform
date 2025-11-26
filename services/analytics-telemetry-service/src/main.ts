@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AnalyticsTelemetryModule } from './module';
 
@@ -7,4 +8,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-

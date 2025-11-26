@@ -13,13 +13,21 @@ const path = require('path');
 const protoRoot = path.join(__dirname, '..', '..', 'packages', 'proto-defs', 'protos');
 
 function listProtos(dir) {
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch (err) {
+    console.warn(`Skipping unreadable directory: ${dir} (${err.code})`);
+    return [];
+  }
   const files = [];
   for (const entry of entries) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       files.push(...listProtos(full));
     } else if (entry.isFile() && entry.name.endsWith('.proto')) {
+  return files;
+}
       files.push(full);
     }
   }

@@ -14,8 +14,8 @@
       "executor": "@nrwl/linter:eslint",
       "options": {
         "lintFilePatterns": [
-          "services/orders-payments-service/src/**/*.ts",
-          "services/orders-payments-service/src/**/*.tsx"
+          "{projectRoot}/src/**/*.ts",
+          "{projectRoot}/src/**/*.tsx"
         ]
       }
     },

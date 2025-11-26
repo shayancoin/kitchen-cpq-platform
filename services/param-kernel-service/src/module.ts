@@ -1,48 +1,15 @@
 import { Module, Injectable } from '@nestjs/common';
+import { trace as otelTrace, context } from '@opentelemetry/api';
 import { performance } from 'perf_hooks';
-
-// Proto-shaped TypeScript types (mirroring packages/proto-defs/protos/parametric_kernel.proto)
-interface ParamDelta {
-  path: string;
-  value_json: string;
-}
-
-interface ApplyDeltaRequest {
-  project_id: string;
-  deltas: ParamDelta[];
-}
-
-interface ConstraintViolation {
-  code: string;
-  severity: string;
-  message: string;
-  affected_cabinet_ids: string[];
-  affected_geometry_ids: string[];
-}
-
-interface ConstraintSummary {
-  has_blocking_errors: boolean;
-  violations: ConstraintViolation[];
-}
-
-interface ParametricStateSummary {
-  state_id: string;
-  version: string;
-  metadata: Record<string, string>;
-}
-
-interface ApplyDeltaResponse {
-  state: ParametricStateSummary;
-  constraints: ConstraintSummary;
-}
-
-interface ValidateDesignRequest {
-  project_id: string;
-}
-
-interface ValidateDesignResponse {
-  constraints: ConstraintSummary;
-}
+import {
+  ApplyDeltaRequest,
+  ApplyDeltaResponse,
+  ParametricStateSummary,
+  ValidateDesignRequest,
+  ValidateDesignResponse,
+  ConstraintSummary
+} from '@kitchen-cpq/shared-types';
+import { InstrumentationModule, logger } from '@kitchen-cpq/instrumentation-otel';
 
 // Placeholder bindings to geometry kernel (replace with real WASM/Rust bridge).
 // Importing @kitchen-cpq/geometry-kernel directly would fail until bindings exist,
@@ -60,7 +27,7 @@ function kernelApplyDelta(_req: ApplyDeltaRequest): {
         catalogVersionId: 'unknown'
       }
     },
-    constraints: { has_blocking_errors: false, violations: [] }
+    constraints: { hasBlockingErrors: false, violations: [] }
   };
 }
 
@@ -76,6 +43,11 @@ function recordHistogram(
 async function withSpan<T>(name: string, fn: () => Promise<T>): Promise<T> {
   // Simple wrapper; replace with real tracer.startActiveSpan
   return fn();
+}
+
+function getTraceId(): string {
+  const span = otelTrace.getSpan(context.active());
+  return span?.spanContext().traceId ?? 'unknown';
 }
 
 @Injectable()
@@ -106,12 +78,12 @@ class ParametricKernelService {
     const serializeMs = serializeEnd - serializeStart;
 
     if (deserializeMs > 2 || kernelMs > 20 || serializeMs > 5 || totalMs > 30) {
-      // In a real implementation, escalate/log; here we just note via console.
-      console.warn('ParamKernel budget breach', {
+      logger.warn('ParamKernel budget breach', {
         deserializeMs,
         kernelMs,
         serializeMs,
-        totalMs
+        totalMs,
+        trace_id: getTraceId()
       });
     }
 
@@ -130,10 +102,10 @@ class ParametricKernelService {
     return response;
   }
 
-  async ValidateDesign(req: ValidateDesignRequest): Promise<ValidateDesignResponse> {
+  async ValidateDesign(_req: ValidateDesignRequest): Promise<ValidateDesignResponse> {
     const start = performance.now();
     // Placeholder validation logic; reuse kernel constraints if needed.
-    const constraints: ConstraintSummary = { has_blocking_errors: false, violations: [] };
+    const constraints: ConstraintSummary = { hasBlockingErrors: false, violations: [] };
     recordHistogram(
       'grpc_server_duration_seconds',
       { service: 'param-kernel', method: 'ValidateDesign' },
@@ -145,6 +117,13 @@ class ParametricKernelService {
 }
 
 @Module({
+  imports: [
+    InstrumentationModule.forRoot({
+      serviceName: 'param-kernel-service',
+      enableTracing: true,
+      enableMetrics: true
+    })
+  ],
   providers: [ParametricKernelService],
   exports: [ParametricKernelService]
 })

@@ -1,9 +1,9 @@
-export default function QuotesListPage() {
+import { QuoteTable } from '@pkg/ui-kit/components';
+
+export default function QuotesListPage(): JSX.Element {
   return (
     <main>
-      <h2>Quotes</h2>
-      <p>Quotes data table (stub).</p>
+      <QuoteTable quotes={[]} loading={true} />
     </main>
   );
 }
-

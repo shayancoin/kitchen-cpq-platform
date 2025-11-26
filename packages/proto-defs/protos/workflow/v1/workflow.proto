@@ -2,6 +2,10 @@ syntax = "proto3";
 
 package workflow.v1;
 
+option go_package = "github.com/shayancoin/kitchen-cpq-platform/api/workflow/v1;workflowv1";
+option java_package = "com.shayancoin.workflow.v1";
+option java_multiple_files = true;
+
 message StartOrderWorkflowRequest {
   string project_id = 1;
   string quote_id = 2;

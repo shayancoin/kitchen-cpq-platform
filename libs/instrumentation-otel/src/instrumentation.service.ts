@@ -78,17 +78,14 @@ export class InstrumentationService {
     histogram.count += 1;
     histogram.sum += durationMs;
 
-    let bucketCaptured = false;
     for (const bucket of this.latencyBuckets) {
       if (durationMs <= bucket) {
         histogram.buckets[bucket.toString()] += 1;
-        bucketCaptured = true;
       }
     }
 
-    if (!bucketCaptured) {
-      histogram.buckets['+Inf'] += 1;
-    }
+    // Ensure +Inf reflects total observations to keep cumulative semantics intact.
+    histogram.buckets['+Inf'] = histogram.count;
 
     this.histograms.set(histogramKey, histogram);
   }

@@ -7,4 +7,4 @@ def version() -> str:
     try:
         return metadata.version("layout-optimizer-lib")
     except metadata.PackageNotFoundError:
-        return ""
+        return "0.0.0+unknown"

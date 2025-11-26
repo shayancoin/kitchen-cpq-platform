@@ -1,7 +1,6 @@
 syntax = "proto3";
 
-// Package name aligned to filesystem path (packages/proto-defs/protos/cad_cam.proto)
-package protos.cad_cam.v1;
+package cad_cam.v1;
 
 message GenerateArtifactsRequest {
   string tenant_id = 1;

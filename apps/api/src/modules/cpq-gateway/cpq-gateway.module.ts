@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
-import { initTRPC } from '@trpc/server';
+import { initTRPC, TRPCError } from '@trpc/server';
+import { verifyAuthToken } from '@kitchen-cpq/shared-auth';
+import { Request } from 'express';
 import { z } from 'zod';
 
-type TokenClaims = {
+export type TokenClaims = {
   tenantId: string;
   userId: string;
   roles: string[];
@@ -30,7 +32,7 @@ class IdentityClient {
  * Placeholder CPQ gRPC client. Wire this to the generated stubs for
  * `cpq.proto` in a real implementation.
  */
-class CpqGrpcClient {
+export class CpqGrpcClient {
   async priceDelta(projectId: string, tenantId: string) {
     // TODO: call gRPC CpqService.PriceDelta with deadline to meet latency budgets.
     return { total_price: 0, currency: 'USD', tenantId, projectId };
@@ -49,6 +51,14 @@ class CpqGrpcClient {
   }
 }
 
+export const createCpqContext = (cpqClient: CpqGrpcClient, req?: Request) => ({
+  cpqClient,
+  req,
+  claims: undefined as TokenClaims | undefined
+});
+
+export type CpqContext = ReturnType<typeof createCpqContext>;
+
 // Simple telemetry stubs; replace with real OpenTelemetry metrics/spans.
 async function withSpan<T>(name: string, fn: () => Promise<T>): Promise<T> {
   return fn();
@@ -62,15 +72,55 @@ function recordHistogram(
   // no-op placeholder
 }
 
-const t = initTRPC.context<{
-  claims: TokenClaims;
-  cpqClient: CpqGrpcClient;
-}>().create();
+const t = initTRPC.context<CpqContext>().create();
+
+const extractBearerToken = (req?: Request): string | undefined => {
+  if (!req) return undefined;
+
+  const header = req.headers['authorization'];
+  if (header && header.toLowerCase().startsWith('bearer ')) {
+    return header.slice(7).trim();
+  }
+
+  const cookieHeader = req.headers['cookie'];
+  if (!cookieHeader) return undefined;
+  const cookies = Object.fromEntries(
+    cookieHeader.split(';').map((c) => {
+      const [k, ...v] = c.trim().split('=');
+      return [k, v.join('=')];
+    })
+  );
+  return cookies['Authorization'] || cookies['authorization'];
+};
 
 const authMiddleware = t.middleware(async ({ ctx, next }) => {
-  return next({
-    ctx
-  });
+  const token = extractBearerToken(ctx.req);
+
+  if (!token) {
+    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Missing bearer token' });
+  }
+
+  try {
+    const claims = verifyAuthToken(token, {
+      audience: process.env.JWT_AUDIENCE,
+      issuer: process.env.JWT_ISSUER
+    });
+
+    const validatedClaims: TokenClaims = {
+      tenantId: claims.tenantId,
+      userId: claims.sub,
+      roles: claims.roles
+    };
+
+    return next({
+      ctx: {
+        ...ctx,
+        claims: validatedClaims
+      }
+    });
+  } catch (err) {
+    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid token', cause: err });
+  }
 });
 
 const baseRouter = t.router({
@@ -78,9 +128,12 @@ const baseRouter = t.router({
     .use(authMiddleware)
     .input(z.object({ projectId: z.string() }))
     .query(async ({ input, ctx }) => {
+      if (!ctx.claims) {
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Missing claims' });
+      }
       const start = Date.now();
       const result = await withSpan('BFF.getQuoteForProject', async () =>
-        ctx.cpqClient.recomputeQuote(input.projectId, ctx.claims.tenantId)
+        ctx.cpqClient.recomputeQuote(input.projectId, ctx.claims?.tenantId || 'unknown')
       );
       recordHistogram(
         'http_request_duration_seconds',
@@ -93,9 +146,12 @@ const baseRouter = t.router({
     .use(authMiddleware)
     .input(z.object({ projectId: z.string() }))
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.claims) {
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Missing claims' });
+      }
       const start = Date.now();
       const result = await withSpan('BFF.recomputeQuote', async () =>
-        ctx.cpqClient.recomputeQuote(input.projectId, ctx.claims.tenantId)
+        ctx.cpqClient.recomputeQuote(input.projectId, ctx.claims?.tenantId || 'unknown')
       );
       recordHistogram(
         'http_request_duration_seconds',
@@ -118,10 +174,13 @@ const baseRouter = t.router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.claims) {
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Missing claims' });
+      }
       const start = Date.now();
       // TODO: extend cpq service to accept adjustments; for now use recompute placeholder
       const result = await withSpan('BFF.applyDealerAdjustments', async () =>
-        ctx.cpqClient.recomputeQuote(input.quoteId, ctx.claims.tenantId)
+        ctx.cpqClient.recomputeQuote(input.quoteId, ctx.claims?.tenantId || 'unknown')
       );
       recordHistogram(
         'http_request_duration_seconds',

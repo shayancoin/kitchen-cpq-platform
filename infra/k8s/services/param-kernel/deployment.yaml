@@ -130,8 +130,8 @@ spec:
     - name: latency-p95
       interval: 1m
       count: 3
-      successCondition: result < 0.5
-      failureCondition: result > 0.6
+      successCondition: result < 0.03
+      failureCondition: result > 0.06
       failureLimit: 1
       provider:
         prometheus:
