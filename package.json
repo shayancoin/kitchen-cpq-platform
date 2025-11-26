@@ -8,7 +8,8 @@
     "build": "tsc",
     "test": "jest",
     "lint": "eslint src --ext .ts",
-    "start": "node dist/index.js"
+    "start": "node demo.js",
+    "demo": "node demo.js"
   },
   "keywords": [
     "cpq",
