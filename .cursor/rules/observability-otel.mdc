@@ -1,8 +1,5 @@
 ---
-alwaysApply: true
----
-
----
+alwaysApply: false
 description: >
   Standardize tracing, metrics, and logging using the instrumentation-otel library
   across all TypeScript services.
@@ -10,7 +7,6 @@ globs:
   - "services/**/src/**/*.ts"
   - "libs/instrumentation-otel/src/**/*.ts"
   - "libs/shared-*/src/**/*.ts"
-alwaysApply: false
 ---
 
 # Observability & OpenTelemetry
