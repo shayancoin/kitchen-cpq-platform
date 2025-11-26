@@ -726,7 +726,7 @@ Kubernetes + service mesh (Istio/Linkerd), Argo CD, Terraform, full OpenTelemetr
 1. Monorepo + multi‑tenant SaaS baseline
 1.1 Multi‑tenant Next.js shell (portals, admin, dealer UI)
 Template: vercel/platforms – “Next.js Multi‑Tenant Example”
-Full‑stack Next.js 15 + React 19 app that demonstrates subdomain‑based multi‑tenancy (tenant‑specific content per tenant.yourdomain.com).
+Full‑stack Next.js 16 + React 19 app that demonstrates subdomain‑based multi‑tenancy (tenant‑specific content per tenant.yourdomain.com).
 
 
 Uses App Router, Tailwind 4, shadcn/ui, and Upstash Redis. (GitHub)
