@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Build
+        run: pnpm build
+
+  param-kernel-rollout:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name != 'pull_request'
+    env:
+      IMAGE_NAME: kitchen-cpq/param-kernel-service
+      ROLLOUT_TEMPLATE: infra/k8s/services/param-kernel/deployment.yaml
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Resolve image digest
+        id: resolve-digest
+        run: |
+          set -euo pipefail
+          IMAGE_TAG="${IMAGE_TAG:-${GITHUB_SHA}}"
+          PRIMARY="${IMAGE_NAME}:${IMAGE_TAG}"
+          FALLBACK="${IMAGE_NAME}:latest"
+
+          if docker buildx imagetools inspect "${PRIMARY}" >/tmp/primary.inspect 2>/tmp/primary.err; then
+            DIGEST=$(docker buildx imagetools inspect "${PRIMARY}" --format '{{json .Digest}}' | tr -d '"')
+            echo "Resolved digest from ${PRIMARY}"
+          elif docker buildx imagetools inspect "${FALLBACK}" >/tmp/fallback.inspect 2>/tmp/fallback.err; then
+            DIGEST=$(docker buildx imagetools inspect "${FALLBACK}" --format '{{json .Digest}}' | tr -d '"')
+            echo "Resolved digest from ${FALLBACK}"
+          else
+            echo "Unable to resolve image digest for ${PRIMARY} or ${FALLBACK}. Ensure the image is published." >&2
+            exit 1
+          fi
+
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Render rollout manifest with digest
+        env:
+          PARAM_KERNEL_IMAGE_DIGEST: ${{ steps.resolve-digest.outputs.digest }}
+        run: |
+          mkdir -p artifacts/param-kernel
+          envsubst < "${ROLLOUT_TEMPLATE}" > artifacts/param-kernel/rollout.yaml
+
+      - name: Upload rendered rollout manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: param-kernel-rollout
+          path: artifacts/param-kernel/rollout.yaml

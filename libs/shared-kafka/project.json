@@ -1,0 +1,28 @@
+{
+  "name": "shared-kafka",
+  "root": "libs/shared-kafka",
+  "sourceRoot": "libs/shared-kafka/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"build shared-kafka (stub)\""
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint shared-kafka (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test shared-kafka (stub)\""
+      }
+    }
+  },
+  "tags": ["type:lib", "scope:shared"]
+}
+

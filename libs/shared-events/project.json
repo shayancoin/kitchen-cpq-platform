@@ -1,0 +1,32 @@
+{
+  "name": "shared-events",
+  "root": "libs/shared-events",
+  "sourceRoot": "libs/shared-events/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p libs/shared-events/tsconfig.lib.json --noEmit"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": [
+          "libs/shared-events/**/*.ts"
+        ],
+        "eslintConfig": "libs/shared-events/.eslintrc.json"
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/shared-events"],
+      "options": {
+        "jestConfig": "libs/shared-events/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["type:lib", "scope:shared"]
+}

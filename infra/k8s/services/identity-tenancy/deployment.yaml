@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-tenancy-service
+  namespace: kitchen-cpq
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: identity-tenancy-service
+  template:
+    metadata:
+      labels:
+        app: identity-tenancy-service
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - identity-tenancy-service
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: identity-tenancy-service
+          image: kitchen-cpq/identity-tenancy-service:v0.1.0
+          ports:
+            - containerPort: 3010
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - "ALL"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: identity-tenancy-service-pdb
+  namespace: kitchen-cpq
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: identity-tenancy-service

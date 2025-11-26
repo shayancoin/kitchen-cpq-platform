@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: temporal-config
+  namespace: kitchen-cpq
+data:
+  placeholder: "temporal configuration will be defined here"
+

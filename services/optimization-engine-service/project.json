@@ -1,0 +1,34 @@
+{
+  "name": "optimization-engine-service",
+  "root": "services/optimization-engine-service",
+  "sourceRoot": "services/optimization-engine-service/app",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"build optimization-engine-service (python, stub)\""
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "cd services/optimization-engine-service && black --check app",
+          "cd services/optimization-engine-service && isort --check app",
+          "cd services/optimization-engine-service && ruff check app",
+          "cd services/optimization-engine-service && mypy app"
+        ],
+        "parallel": false
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd services/optimization-engine-service && pytest"
+      }
+    }
+  },
+  "tags": ["type:service", "scope:optimization", "language:python"]
+}
+

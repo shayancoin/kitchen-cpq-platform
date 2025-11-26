@@ -1,0 +1,33 @@
+{
+  "name": "cad-cam-dfm-service",
+  "root": "services/cad-cam-dfm-service",
+  "sourceRoot": "services/cad-cam-dfm-service/nest/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p services/cad-cam-dfm-service/nest/tsconfig.app.json"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint cad-cam-dfm-service (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test cad-cam-dfm-service (stub)\""
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"serve cad-cam-dfm-service (stub)\""
+      }
+    }
+  },
+  "tags": ["type:service", "scope:cad-cam"]
+}

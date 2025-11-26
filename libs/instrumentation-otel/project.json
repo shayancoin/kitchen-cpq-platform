@@ -1,0 +1,28 @@
+{
+  "name": "instrumentation-otel",
+  "root": "libs/instrumentation-otel",
+  "sourceRoot": "libs/instrumentation-otel/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"build instrumentation-otel (stub)\""
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint instrumentation-otel (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test instrumentation-otel (stub)\""
+      }
+    }
+  },
+  "tags": ["type:lib", "scope:infra"]
+}
+

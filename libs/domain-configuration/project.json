@@ -1,0 +1,27 @@
+{
+  "name": "domain-configuration",
+  "root": "libs/domain-configuration",
+  "sourceRoot": "libs/domain-configuration/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"build domain-configuration (stub)\""
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint domain-configuration (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test domain-configuration (stub)\""
+      }
+    }
+  },
+  "tags": ["type:lib", "scope:domain"]
+}

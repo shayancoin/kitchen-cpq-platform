@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package workflow.v1;
+
+message StartOrderWorkflowRequest {
+  string project_id = 1;
+  string quote_id = 2;
+  string tenant_id = 3;
+}
+
+message StartOrderWorkflowResponse {
+  string workflow_id = 1;
+}
+
+service WorkflowService {
+  rpc StartOrderWorkflow(StartOrderWorkflowRequest) returns (StartOrderWorkflowResponse);
+}
+

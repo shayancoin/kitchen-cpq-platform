@@ -1,0 +1,33 @@
+{
+  "name": "notifications-docs-service",
+  "root": "services/notifications-docs-service",
+  "sourceRoot": "services/notifications-docs-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p services/notifications-docs-service/tsconfig.app.json"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint notifications-docs-service (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test notifications-docs-service (stub)\""
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"serve notifications-docs-service (stub)\""
+      }
+    }
+  },
+  "tags": ["type:service", "scope:notifications"]
+}

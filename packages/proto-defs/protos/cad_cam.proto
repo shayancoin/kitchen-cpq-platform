@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+// Package name aligned to filesystem path (packages/proto-defs/protos/cad_cam.proto)
+package protos.cad_cam.v1;
+
+message GenerateArtifactsRequest {
+  string tenant_id = 1;
+  string project_id = 2;
+  string quote_id = 3;
+}
+
+message GenerateArtifactsResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_PARTIAL = 2;
+    STATUS_FAILED = 3;
+  }
+  Status status = 1;
+  string bom_id = 2;
+  string cut_list_id = 3;
+  string cnc_program_id = 4;
+  string error_message = 5;
+  int64 generation_time_ms = 6;
+}
+
+service CadCamService {
+  rpc GenerateArtifacts(GenerateArtifactsRequest) returns (GenerateArtifactsResponse);
+}

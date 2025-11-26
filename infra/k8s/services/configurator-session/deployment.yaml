@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: configurator-session-service
+  namespace: kitchen-cpq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: configurator-session-service
+  template:
+    metadata:
+      labels:
+        app: configurator-session-service
+    spec:
+      containers:
+        - name: configurator-session-service
+          image: kitchen-cpq/configurator-session-service:v1.0.0
+          ports:
+            - containerPort: 3013
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3013
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3013
+            initialDelaySeconds: 5
+            periodSeconds: 5

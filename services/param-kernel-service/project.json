@@ -1,0 +1,33 @@
+{
+  "name": "param-kernel-service",
+  "root": "services/param-kernel-service",
+  "sourceRoot": "services/param-kernel-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p services/param-kernel-service/tsconfig.app.json"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint param-kernel-service (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test param-kernel-service (stub)\""
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"serve param-kernel-service (stub)\""
+      }
+    }
+  },
+  "tags": ["type:service", "scope:param-kernel"]
+}

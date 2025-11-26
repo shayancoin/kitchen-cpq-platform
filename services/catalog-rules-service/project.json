@@ -1,0 +1,33 @@
+{
+  "name": "catalog-rules-service",
+  "root": "services/catalog-rules-service",
+  "sourceRoot": "services/catalog-rules-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p services/catalog-rules-service/tsconfig.app.json"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint catalog-rules-service (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test catalog-rules-service (stub)\""
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"serve catalog-rules-service (stub)\""
+      }
+    }
+  },
+  "tags": ["type:service", "scope:catalog"]
+}

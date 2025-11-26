@@ -1,0 +1,33 @@
+{
+  "name": "analytics-telemetry-service",
+  "root": "services/analytics-telemetry-service",
+  "sourceRoot": "services/analytics-telemetry-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p services/analytics-telemetry-service/tsconfig.app.json"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint analytics-telemetry-service (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test analytics-telemetry-service (stub)\""
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"serve analytics-telemetry-service (stub)\""
+      }
+    }
+  },
+  "tags": ["type:service", "scope:analytics"]
+}

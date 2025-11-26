@@ -1,0 +1,143 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: param-kernel-service
+  namespace: kitchen-cpq
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  progressDeadlineSeconds: 600
+  selector:
+    matchLabels:
+      app: param-kernel-service
+  strategy:
+    canary:
+      maxSurge: 1
+      maxUnavailable: 0
+      stableService: param-kernel-service
+      canaryService: param-kernel-service-canary
+      steps:
+        - setWeight: 20
+        - pause:
+            duration: 5m
+        - analysis:
+            templates:
+              - templateName: param-kernel-canary-health
+                args:
+                  - name: service
+                    value: param-kernel-service-canary
+        - setWeight: 50
+        - pause:
+            duration: 10m
+        - analysis:
+            templates:
+              - templateName: param-kernel-canary-health
+                args:
+                  - name: service
+                    value: param-kernel-service-canary
+        - setWeight: 100
+        - pause:
+            duration: 5m
+  template:
+    metadata:
+      labels:
+        app: param-kernel-service
+    spec:
+      containers:
+        - name: param-kernel-service
+          image: kitchen-cpq/param-kernel-service@${PARAM_KERNEL_IMAGE_DIGEST}
+          ports:
+            - containerPort: 3012
+              name: http
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3012
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3012
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: param-kernel-service
+  namespace: kitchen-cpq
+spec:
+  selector:
+    app: param-kernel-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3012
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: param-kernel-service-canary
+  namespace: kitchen-cpq
+spec:
+  selector:
+    app: param-kernel-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3012
+      protocol: TCP
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: param-kernel-canary-health
+  namespace: kitchen-cpq
+spec:
+  args:
+    - name: service
+    - name: namespace
+      value: kitchen-cpq
+  metrics:
+    - name: error-rate
+      interval: 1m
+      count: 3
+      successCondition: result < 0.01
+      failureCondition: result > 0.03
+      failureLimit: 1
+      provider:
+        prometheus:
+          address: http://prometheus.kube-system:9090
+          query: |
+            sum(rate(http_requests_total{service="{{args.service}}",namespace="{{args.namespace}}",status=~"5.."}[1m])) /
+            sum(rate(http_requests_total{service="{{args.service}}",namespace="{{args.namespace}}"}[1m]))
+    - name: latency-p95
+      interval: 1m
+      count: 3
+      successCondition: result < 0.5
+      failureCondition: result > 0.6
+      failureLimit: 1
+      provider:
+        prometheus:
+          address: http://prometheus.kube-system:9090
+          query: |
+            histogram_quantile(
+              0.95,
+              sum(rate(http_request_duration_seconds_bucket{service="{{args.service}}",namespace="{{args.namespace}}"}[1m])) by (le)
+            )

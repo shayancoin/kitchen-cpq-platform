@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpq-pricing-service
+  namespace: kitchen-cpq
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cpq-pricing-service
+  template:
+    metadata:
+      labels:
+        app: cpq-pricing-service
+    spec:
+      containers:
+        - name: cpq-pricing-service
+          image: kitchen-cpq/cpq-pricing-service:latest
+          ports:
+            - containerPort: 3014
+

@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package cpq.v1;
+
+message PriceDeltaRequest {
+  string project_id = 1;
+}
+
+message PriceDeltaResponse {
+  double total_price = 1;
+  string currency = 2;
+}
+
+message RecomputeQuoteRequest {
+  string project_id = 1;
+}
+
+message QuoteLineItem {
+  string id = 1;
+  string sku = 2;
+  string description = 3;
+  double quantity = 4;
+  double unit_price = 5;
+  double list_price = 6;
+  double net_price = 7;
+  string currency = 8;
+  double margin_percent = 9;
+}
+
+message QuoteSummary {
+  string id = 1;
+  string project_id = 2;
+  string tenant_id = 3;
+  string status = 4;
+  string currency = 5;
+  double subtotal = 6;
+  double tax = 7;
+  double total = 8;
+  double margin_percent = 9;
+  string catalog_version_id = 10;
+  repeated QuoteLineItem line_items = 11;
+}
+
+service CpqService {
+  rpc PriceDelta(PriceDeltaRequest) returns (PriceDeltaResponse);
+  rpc RecomputeQuote(RecomputeQuoteRequest) returns (QuoteSummary);
+}
+

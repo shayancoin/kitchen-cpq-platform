@@ -1,0 +1,33 @@
+{
+  "name": "integrations-crm-service",
+  "root": "services/integrations/crm-service",
+  "sourceRoot": "services/integrations/crm-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p services/integrations/crm-service/tsconfig.app.json"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint integrations-crm-service (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test integrations-crm-service (stub)\""
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"serve integrations-crm-service (stub)\""
+      }
+    }
+  },
+  "tags": ["type:service", "scope:integrations", "integration:crm"]
+}

@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package parametric.v1;
+
+// NOTE: ParametricStateJson is deprecated; full parametric state should be
+// persisted externally (e.g., S3/Redis) keyed by state_id. The RPC surface now
+// returns a compact summary instead of large opaque JSON payloads.
+
+message ParamDelta {
+  string path = 1;
+  string value_json = 2;
+}
+
+message ApplyDeltaRequest {
+  string project_id = 1;
+  repeated ParamDelta deltas = 2;
+}
+
+message ConstraintViolation {
+  string code = 1;
+  string severity = 2;
+  string message = 3;
+  repeated string affected_cabinet_ids = 4;
+  repeated string affected_geometry_ids = 5;
+}
+
+message ConstraintSummary {
+  bool has_blocking_errors = 1;
+  repeated ConstraintViolation violations = 2;
+}
+
+// Compact summary of persisted parametric state.
+message ParametricStateSummary {
+  // Immutable ID of the persisted state blob (e.g., S3 key, Redis key).
+  string state_id = 1;
+  // Schema/catalog version of the state for migration/bookkeeping.
+  string version = 2;
+  // Lightweight metadata extracted from the state (e.g., projectId, catalogVersionId, hash).
+  map<string, string> metadata = 3;
+}
+
+message ApplyDeltaResponse {
+  ParametricStateSummary state = 1;
+  ConstraintSummary constraints = 2;
+}
+
+message ValidateDesignRequest {
+  string project_id = 1;
+}
+
+message ValidateDesignResponse {
+  ConstraintSummary constraints = 1;
+}
+
+service ParametricKernelService {
+  rpc ApplyDelta(ApplyDeltaRequest) returns (ApplyDeltaResponse);
+  rpc ValidateDesign(ValidateDesignRequest) returns (ValidateDesignResponse);
+}

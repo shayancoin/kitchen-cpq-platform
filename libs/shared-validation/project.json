@@ -1,0 +1,27 @@
+{
+  "name": "shared-validation",
+  "root": "libs/shared-validation",
+  "sourceRoot": "libs/shared-validation/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"build shared-validation (stub)\""
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint shared-validation (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test shared-validation (stub)\""
+      }
+    }
+  },
+  "tags": ["type:lib", "scope:shared"]
+}

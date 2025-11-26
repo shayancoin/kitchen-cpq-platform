@@ -1,0 +1,36 @@
+{
+  "name": "orders-payments-service",
+  "root": "services/orders-payments-service",
+  "sourceRoot": "services/orders-payments-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p services/orders-payments-service/tsconfig.app.json"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": [
+          "services/orders-payments-service/src/**/*.ts",
+          "services/orders-payments-service/src/**/*.tsx"
+        ]
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test orders-payments-service (stub)\""
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"serve orders-payments-service (stub)\""
+      }
+    }
+  },
+  "tags": ["type:service", "scope:orders"]
+}
