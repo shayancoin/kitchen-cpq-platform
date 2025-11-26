@@ -1,0 +1,37 @@
+{
+  "name": "kitchen-cpq-platform",
+  "version": "1.0.0",
+  "description": "Frontier, end-to-end, 3D kitchen CPQ + CAD-to-CNC platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "start": "node demo.js",
+    "demo": "node demo.js"
+  },
+  "keywords": [
+    "cpq",
+    "kitchen",
+    "3d",
+    "cad",
+    "cnc",
+    "configurator"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "three": "^0.160.0"
+  }
+}
