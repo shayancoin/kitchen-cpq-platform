@@ -1,8 +1,5 @@
 ---
 alwaysApply: true
----
-
----
 description: >
   Enforce strict latency budgets and performance constraints for all interactive paths,
   aligned with the data-contracts-tRPC-gRPC-latency spec.
@@ -11,7 +8,6 @@ globs:
   - "services/**/src/**/*.ts"
   - "libs/instrumentation-otel/src/**/*.ts"
   - "libs/shared-types/src/**/*.ts"
-alwaysApply: true
 ---
 
 # Performance & Latency Budgets
