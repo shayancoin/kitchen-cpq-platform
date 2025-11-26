@@ -12,7 +12,8 @@ globs:
 # Rust / WASM Geometry Kernel Workflow
 
 The Rust geometry kernel is the authoritative implementation of parametric
-geometry operations. :contentReference[oaicite:16]{index=16}  
+The Rust geometry kernel is the authoritative implementation of parametric
+geometry operations.
 
 ## 1. Rust Module Layout
 
@@ -26,7 +27,13 @@ geometry operations. :contentReference[oaicite:16]{index=16}
 ## 2. WASM Boundary
 
 - Use `wasm-pack`/`wasm-bindgen` to generate bindings:
-  - Expose **small, composable** functions (e.g. `apply_delta`, `validate_state`).
+  - Expose **small, composable** functions (e.g. `apply_delta`, `validate_state`):
+    - Max function size: ≤ 150 lines (per clippy guidelines).
+    - Max cyclomatic complexity: ≤ 10.
+  - Deterministic for given inputs (logical determinism, not bit-for-bit):
+    - Same input must yield the same geometry result ±1e-6 units.
+    - Use exact predicates (e.g., orientation tests) or adaptive filtering for robustness.
+    - Document any non-deterministic components (solver randomization, if present).
   - Accept/return JSON strings or well-defined FFI structs, not ad-hoc blobs.
 - Ensure all exported functions are:
   - Pure (no global mutable state).
@@ -35,14 +42,17 @@ geometry operations. :contentReference[oaicite:16]{index=16}
 ## 3. Consumption Patterns
 
 - Front-end (3D configurator):
-  - Uses the WASM module for local geometric checks / previews only.
+    Calls the same Rust logic natively or via WASM, then wraps results in gRPC
+    responses (`ParametricKernelService`).
 - Backend (`param-kernel-service`):
   - Calls the same Rust logic natively or via WASM, then wraps results in gRPC
-    responses (`ParametricKernelService`). :contentReference[oaicite:17]{index=17}  
+    responses (`ParametricKernelService`).  
 
-## 4. Testing & Safety
-
-- Rust unit tests for kernel and constraints must run in CI.
+- Add at least one test that:
+  - Loads the WASM module in a Node environment (via wasm-bindgen generated loader).
+  - Invokes `apply_delta(current_state, delta)` with a known input.
+  - Asserts output matches a golden fixture (or computed reference) within tolerance.
+  - Example: delta applied to a 2x2 grid → verify cabinet positions within ±1mm.
 - Add at least one test that:
   - Loads the WASM module in a Node environment.
   - Verifies a roundtrip call (`apply_delta`, `validate_design`) returns expected data.

@@ -30,7 +30,7 @@ and pricing engines. It must never become the source of truth.
 
 - User interactions (drag, add/remove cabinet, change option) must:
   1. Compute a **parametric delta** (no imperative geometry edits).
-  2. Call the BFF via tRPC to apply the delta (which calls the kernel + CPQ). :contentReference[oaicite:8]{index=8}  
+  2. Call the BFF via tRPC to apply the delta (which calls the kernel + CPQ).   
   3. Receive an updated canonical state + constraint summary + price changes.
   4. Re-render the Babylon scene from the updated state.
 - No direct DB or pricing logic inside 3D engine or React components.
@@ -43,11 +43,22 @@ and pricing engines. It must never become the source of truth.
 - Use:
   - Instancing for repeated cabinet meshes.
   - LODs or simplified meshes for distant geometry.
-  - Pre-baked static meshes for walls/fixed structure.
-
-## 4. Embeddable SDK
-
-- `packages/configurator-sdk` exposes a stable host API:
+  - Pre-baked static meshes for geometry that is:
+    - Immutable across all configurations (walls, floors, ceilings).
+    - OR parameterized via a small set of dimensions (countertop length, depth).
+    - Parametric dimensions allowed: countertop length, depth, height (≤ 3 free variables per mesh).
+    - Geometry computed at bake time or via precomputed lookup tables (no runtime WASM calls for mesh generation).
+    - Pre-baked meshes loaded from glTF; LOD variants provided for distance-based culling.
+    - All editable cabinets/appliances use instanced dynamic geometry.
+    - Pre-baked meshes loaded from glTF; LOD variants provided for distance-based culling.
+    - All editable cabinets/appliances use instanced dynamic geometry.
+  - `init(container: HTMLElement, tenantId: string, locale: string, authToken: string, callbacks: SDKCallbacks)`
+    returns: ConfiguratorSession
+    Callbacks: { onDeltaApplied, onError, onLoadComplete, onPriceChange }
+    See packages/configurator-sdk/docs/api.md for full type definitions.
+- All host integrations (dealer sites, B2C flows) must:
+  - Use the SDK API instead of reaching into internal React/Babylon APIs.
+  - Treat configuration IDs and project IDs as opaque references.
   - `init(container, tenantId, locale, authToken, callbacks...)`.
 - All host integrations (dealer sites, B2C flows) must:
   - Use the SDK API instead of reaching into internal React/Babylon APIs.

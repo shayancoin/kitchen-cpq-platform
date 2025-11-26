@@ -15,7 +15,9 @@ alwaysApply: true
 
 ## Service boundaries
 
-- Each folder under `services/` is a **single deployable unit** (Docker image).
+- Each folder under `services/` is a **single deployable unit** (Docker image, deployed independently).
+- Libraries under `libs/` are **shared code only** (versioned in package.json, never independently deployed).
+- Each service owns its Dockerfile and deployment manifest; no shared deployment configs.
 - Services must align with domain capabilities:
 
   - `identity-tenancy-service`
@@ -43,10 +45,11 @@ alwaysApply: true
 
 - **Service → service (async):** Use **Kafka** topics for domain events, and Temporal workflows for long‑running processes.   
 
-- Never introduce ad‑hoc HTTP between services without adding proto + stubs; if you need HTTP, add it behind the API gateway.
-
-## Shared types & contracts
-
+- HTTP between services is prohibited to enforce a clear protocol hierarchy:
+  - Frontend → Backend: tRPC (through API gateway).
+  - Service → Service (async): Kafka (event-driven, contracts defined in packages/proto-defs).
+  - Service → Service (sync, non-critical): gRPC is preferred; HTTP requires approval. Approval policy: only the architecture board or designated platform/tech lead can approve; require a one-paragraph justification plus a trade-off checklist (measured P50/P95 vs gRPC, compatibility/coupling reasons, implementation/client constraints, evidence that gRPC lacks sufficient benefit). Include an ADR or commit message section linking the analysis and benchmark data. Approvals are time-bound and must be revisited when system characteristics change.
+  - Rationale: gRPC benefits (auto-generated stubs, streaming, type safety) reduce operational drift.
 - All shared TS types live in `libs/shared-types`. If you need a type across services, add it there and import; do **not** re‑declare.   
 - gRPC contracts must be defined in `packages/proto-defs/protos/*.proto` and generated into `gen/ts`, `gen/py`, `gen/rs`.   
 
@@ -61,26 +64,33 @@ alwaysApply: true
 - Respect P95 budgets defined in `data-contracts-tRPC-gRPC-latency`:
 
   - Critical interactive path (`mutateParameters` + CPQ): **L_total^P95 ≤ 150 ms** backend+network.   
-  - Identity/session load path: P95 backend **≤ 50 ms**. :contentReference[oaicite:18]{index=18}  
+  - Identity/session load path: P95 backend **≤ 50 ms**.  
 
 - Any new synchronous RPC on the critical path must:
 
   - Document its P95 budget.
   - Be added to latency tests in `tools/scripts/check-latency-budgets.ts`.   
 
-## Implementation rules
+  - Use a well-maintained FastAPI structure (official docs: https://fastapi.tiangolo.com/tutorial/). If referencing a template, pin to a known release and note maintenance status; suggested example: https://github.com/tiangolo/full-stack-fastapi-template (pin to a tagged release). Recommended layout: routers/ (HTTP endpoints), services/ (business logic), repositories/ (data access). Verify last release date, open issues trend, and CI status before treating as reference; plan migration if the template falls behind security/bugfix releases.
 
 - NestJS services:
 
-  - Use the patterns and modules from `ack-nestjs-boilerplate-kafka` for Kafka integration and configuration.   
+  - For Kafka integration/configuration, prefer maintained sources: NestJS official docs (https://docs.nestjs.com/microservices/kafka) or a pinned community example with active releases (e.g., https://github.com/andrechristikan/ack-nestjs-boilerplate-kafka at a specific tag). Document maintenance verification (recent commits, passing CI) and provide a migration path to official patterns if the example lags.
   - Each service has `src/domain`, `src/app`, `src/infra` layers; no direct DB access from controllers.
 
 - Python services:
 
-  - Use `onlythompson/fastapi-microservice-template` structure (routers, services, repositories).   
+  - Apply the FastAPI layout above; if you use a template, pin to a release and record maintenance status/limitations and a migration plan to official docs if it stalls.   
 
 - Rust binaries:
 
   - Are pure computation services (geometry, DFM, CNC); they expose gRPC or are embedded in Nest/FastAPI via FFI.
   - All FFI boundaries must be encapsulated in a single module; no scattering of `unsafe` across the codebase.
-
+  - Canonical encapsulation pattern (per service):
+    1. **Single top-level directory**: `/src/ffi` or `/native` containing all FFI assets.
+    2. **Unsafe wrapper file** (e.g., `ffi/unsafe_bindings.rs`): imports raw `extern` functions and is the **only** location where `unsafe` blocks appear; must stay `pub(crate)` and never exported directly.
+    3. **Safe facade** (e.g., `ffi/mod.rs` or `ffi/facade.rs`): converts raw pointers/structs into domain types, performs validation, handles error translation (`Result<T, DomainError>`), and exposes only safe functions to the rest of the codebase.
+    4. **Init/teardown** (e.g., `ffi/lifecycle.rs`): manages library loading/unloading, allocator configuration, and buffer lifecycle; document ownership rules (which side allocates/frees, who owns pointers/buffers) and enforce them in the facade.
+    5. **Public API docs**: in-module rustdoc with examples showing safe calls and expected errors; include notes on ownership, visibility (`pub` only from facade, `pub(crate)` elsewhere), and naming conventions (`*_ffi` for raw types, domain names for safe types).
+    6. **Tests**: unit + integration tests against the safe facade that simulate failures (null pointers, error codes, double-free attempts) to prove unsafe does not leak.
+  - Naming/visibility conventions: raw bindings suffix `_ffi` or `_raw`, kept `pub(crate)`; safe API uses domain naming, exported via `pub`; all error codes mapped to domain errors; ownership documented and asserted in tests.

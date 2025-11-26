@@ -36,7 +36,10 @@ clear structure for reproducibility and performance.
 
 ## 3. Performance & Determinism
 
-- Use OR-Tools’ parameters to favour reproducible solutions where possible.
+- Use OR-Tools' parameters to enable reproducible solutions:
+  - Set `random_seed` to a fixed value (e.g. 42) for golden tests.
+  - Use deterministic search strategy: e.g., `SatParameters.FIXED_SEARCH` or equivalent.
+  - Document the seed + strategy combination in test fixtures.
 - For interactive use:
   - Limit maximum layouts returned (e.g. 4).
   - Consider warm-starting from previous solutions.

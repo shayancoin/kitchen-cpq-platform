@@ -16,13 +16,25 @@ This rule encodes the platform-wide latency budgets. When adding or modifying AP
 the Agent must reason against these constraints and prefer designs that keep us
 safely inside the budgets.
 
+## Depends-on / prerequisites
+
+- `docs/performance/data-contracts-tRPC-gRPC-latency.md` (expected path; currently missing → mark this rule as draft/pending until created or inline the budgets here).
+- `docs/performance/central-latency-spec.md` (expected path for composed budgets; also missing → create before claiming compliance).
+- `tools/scripts/check-latency-budgets.ts` (CI check that enforces per-endpoint budgets).
+
 ## 1. Global Principles
 
-- Treat the budgets in `data-contracts-tRPC-gRPC-latency.md` as **hard constraints**, not suggestions.   
+- Treat the budgets in `data-contracts-tRPC-gRPC-latency.md` as **hard constraints by default**. Exceptions must follow the escalation path below.   
 - Never introduce a new interactive network hop on the critical path without
   explicitly allocating a slice of the latency budget.
 - Prefer **fewer RPCs with richer payloads** over many small calls on hot paths.
 - All new endpoints must be observable (traces + metrics) so we can measure P95/P99.
+
+**Exceptions / escalation**
+
+- Any exception requires a documented justification (ADR/RFC) approved by the Engineering Manager **and** Infra/Platform lead. Use the ADR template at `docs/adr/latency-exception-template.md`.
+- Exceptions must include a mitigation plan, observability requirements, and a remediation timeline/owner for production violations.
+- CI/CD must reject merges that bypass this process; link the ADR in the PR description.
 
 ## 2. Critical Paths (must stay within these limits)
 
@@ -34,7 +46,7 @@ safely inside the budgets.
 
 2. **Configurator drag → constraints + price update**
 
-   - End‑to‑end (`Browser → BFF → ParamKernel → CPQ → BFF → Browser`) P95 ≤ **150 ms**. :contentReference[oaicite:3]{index=3}  
+   - End‑to‑end (`Browser → BFF → ParamKernel → CPQ → BFF → Browser`) P95 ≤ **150 ms**.   
    - Segment budgets:
      - Network in: 20 ms
      - BFF internal (auth, Redis, routing): 10 ms
@@ -53,9 +65,15 @@ safely inside the budgets.
 
    - `CadCamService.GenerateArtifacts` P95 ≤ **30 s**.
    - Entire `ManufacturingJobWorkflow` P95 ≤ **180 s** but front‑end must receive an
-     acknowledgement from `StartOrderWorkflow` in < **200 ms**. :contentReference[oaicite:4]{index=4}  
+     acknowledgement from `StartOrderWorkflow` in < **150 ms** (critical-path feedback; aligned with backend-architecture/temporal-workflows).
 
-## 3. Implementation Requirements
+## 3. Composition & Verification
+
+- Composition rule (conservative): P95(sum) ≤ sum of component P95s. This is a safe upper bound assuming worst-case tail correlation. Actual P95(sum) is typically 10-20% lower for uncorrelated segments.
+- Composition rule (expected): Use distribution convolution or Monte-Carlo resampling for realistic estimates. For sequential paths with uncorrelated latencies, E[P95(sum)] ≈ sum of means + 1.645 × √(sum of variances).
+- Verification: collect per-component latency histograms (P50/P95/P99) from traces/metrics, and compute composed P95 via distribution convolution or Monte-Carlo resampling of end-to-end traces.
+- Evidence: claims of slack (e.g., "20–30% headroom") must include supporting traces or simulations. If measured end-to-end P95 exceeds 150 ms, adjust budgets or add buffer and remediation plan.
+## 4. Implementation Requirements
 
 - Any new service method added **on a critical path** must:
   - Document its P95 budget in the code comment and in the central latency spec.
@@ -64,9 +82,15 @@ safely inside the budgets.
   - Assert P95 ≤ budget for each endpoint in the spec.
   - Run in CI for `main` and block merges on regressions > 10% over budget.
 
-## 4. Refactoring Guidance
+## 5. Refactoring Guidance
 
-- If a change risks exceeding budget:
-  - Move heavy work to asynchronous workflows (Temporal) or background jobs.
-  - Cache immutable data (catalog snapshots, rule trees) in Redis or in‑process.
-  - Use batched gRPC calls instead of per‑entity RPCs.
+- Decision helpers:
+  - If an operation consistently > 10 ms on the hot path → consider async/Temporal.
+  - If the same remote service is called > 3× per request → batch RPCs.
+  - If immutable data is read > 5×/sec → cache (Redis or in-process with TTL/invalidations).
+- Examples (see repo patterns): Temporal workflow orchestration in `services/workflow-orchestration-service`, Redis/in-process caching in `apps/api` middleware, gRPC batching utilities in `packages/proto-defs` clients.
+- Performance Refactoring Checklist:
+  - Measure current CPU/ms, memory, RPC count, and per-component latency contribution.
+  - Choose refactor (batching, caching, async) and define expected improvement.
+  - Add/adjust metrics to validate impact; run before/after benchmarks.
+  - Ensure refactor stays within budgets in CI (load tests + latency checks).
