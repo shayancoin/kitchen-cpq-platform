@@ -1,0 +1,33 @@
+{
+  "name": "workflow-orchestration-service",
+  "root": "services/workflow-orchestration-service",
+  "sourceRoot": "services/workflow-orchestration-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"build workflow-orchestration-service (stub)\""
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint workflow-orchestration-service (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test workflow-orchestration-service (stub)\""
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"serve workflow-orchestration-service (stub)\""
+      }
+    }
+  },
+  "tags": ["type:service", "scope:workflow"]
+}

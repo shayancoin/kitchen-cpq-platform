@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package ai.v1;
+
+message CopilotEvent {
+  string session_id = 1;
+  string project_id = 2;
+  string tenant_id = 3;
+  string user_id = 4;
+  CopilotMessage message = 5;
+  int64 timestamp_ms = 6;
+}
+
+message CopilotMessage {
+  string role = 1;  // "user" | "assistant" | "system"
+  string content = 2;
+  repeated ToolCall tool_calls = 3;
+}
+
+message ToolCall {
+  string id = 1;
+  string function_name = 2;
+  string arguments_json = 3;
+}
+
+message Empty {}
+
+service CopilotService {
+  rpc LogEvent(CopilotEvent) returns (Empty);
+}
+

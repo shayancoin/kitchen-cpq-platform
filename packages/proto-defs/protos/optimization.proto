@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package optimization.v1;
+
+message LayoutGoals {
+  double storage_weight = 1;
+  double budget_weight = 2;
+  double openness_weight = 3;
+  double family_friendly_weight = 4;
+  bool prefers_island = 5;
+}
+
+message SuggestLayoutsRequest {
+  string project_id = 1;
+  LayoutGoals goals = 2;
+  uint32 max_layouts = 3;
+}
+
+message LayoutVariant {
+  string id = 1;
+  string label = 2;
+  string state_json = 3;
+  double work_triangle_score = 4;
+  double storage_score = 5;
+  double budget_score = 6;
+  double ergonomics_score = 7;
+}
+
+message SuggestLayoutsResponse {
+  repeated LayoutVariant variants = 1;
+}
+
+service OptimizationService {
+  rpc SuggestLayouts(SuggestLayoutsRequest) returns (SuggestLayoutsResponse);
+}
+

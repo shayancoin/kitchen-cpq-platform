@@ -1,0 +1,28 @@
+{
+  "name": "shared-auth",
+  "root": "libs/shared-auth",
+  "sourceRoot": "libs/shared-auth/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"build shared-auth (stub)\""
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint shared-auth (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test shared-auth (stub)\""
+      }
+    }
+  },
+  "tags": ["type:lib", "scope:shared"]
+}
+

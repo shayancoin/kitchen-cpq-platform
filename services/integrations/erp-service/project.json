@@ -1,0 +1,33 @@
+{
+  "name": "integrations-erp-service",
+  "root": "services/integrations/erp-service",
+  "sourceRoot": "services/integrations/erp-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p services/integrations/erp-service/tsconfig.app.json"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint integrations-erp-service (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test integrations-erp-service (stub)\""
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"serve integrations-erp-service (stub)\""
+      }
+    }
+  },
+  "tags": ["type:service", "scope:integrations", "integration:erp"]
+}

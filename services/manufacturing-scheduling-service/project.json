@@ -1,0 +1,33 @@
+{
+  "name": "manufacturing-scheduling-service",
+  "root": "services/manufacturing-scheduling-service",
+  "sourceRoot": "services/manufacturing-scheduling-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p services/manufacturing-scheduling-service/tsconfig.app.json"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint manufacturing-scheduling-service (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test manufacturing-scheduling-service (stub)\""
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"serve manufacturing-scheduling-service (stub)\""
+      }
+    }
+  },
+  "tags": ["type:service", "scope:manufacturing"]
+}

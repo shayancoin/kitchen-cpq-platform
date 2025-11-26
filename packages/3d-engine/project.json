@@ -1,0 +1,16 @@
+{
+  "name": "@kitchen-cpq/3d-engine",
+  "root": "packages/3d-engine",
+  "sourceRoot": "packages/3d-engine/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec vite build",
+        "cwd": "packages/3d-engine"
+      }
+    }
+  },
+  "tags": ["type:package", "scope:3d-engine"]
+}

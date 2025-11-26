@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-rules-service
+  namespace: kitchen-cpq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-rules-service
+  template:
+    metadata:
+      labels:
+        app: catalog-rules-service
+    spec:
+      containers:
+        - name: catalog-rules-service
+          image: kitchen-cpq/catalog-rules-service:latest
+          ports:
+            - containerPort: 3011
+

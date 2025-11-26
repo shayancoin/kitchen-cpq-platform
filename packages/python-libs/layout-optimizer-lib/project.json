@@ -1,0 +1,16 @@
+{
+  "name": "layout-optimizer-lib",
+  "root": "packages/python-libs/layout-optimizer-lib",
+  "sourceRoot": "packages/python-libs/layout-optimizer-lib/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"build layout-optimizer-lib (python, stub)\""
+      }
+    }
+  },
+  "tags": ["type:package", "scope:optimization", "language:python"]
+}
+

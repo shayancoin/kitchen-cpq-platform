@@ -1,0 +1,12 @@
+[package]
+name = "cad_cam_dfm_kernel"
+version = "0.0.1"
+edition = "2021"
+
+[lib]
+name = "cad_cam_dfm_kernel"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+

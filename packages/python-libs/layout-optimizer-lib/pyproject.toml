@@ -1,0 +1,10 @@
+[project]
+name = "layout-optimizer-lib"
+version = "0.0.1"
+description = "Shared Python library for layout optimization."
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+

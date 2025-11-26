@@ -1,0 +1,11 @@
+{
+  "name": "@kitchen-cpq/proto-defs",
+  "version": "0.0.1",
+  "private": true,
+  "main": "gen/ts/index.js",
+  "types": "gen/ts/index.d.ts",
+  "scripts": {
+    "generate": "node ../../tools/scripts/generate-protos.cjs"
+  }
+}
+

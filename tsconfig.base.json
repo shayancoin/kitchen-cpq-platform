@@ -1,0 +1,43 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2019",
+    "module": "esnext",
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@kitchen-cpq/shared-types": ["libs/shared-types/src/index.ts"],
+      "@kitchen-cpq/shared-events": ["libs/shared-events/src/index.ts"],
+      "@kitchen-cpq/shared-config": ["libs/shared-config/src/index.ts"],
+      "@kitchen-cpq/shared-auth": ["libs/shared-auth/src/index.ts"],
+      "@kitchen-cpq/shared-validation": ["libs/shared-validation/src/index.ts"],
+      "@kitchen-cpq/shared-trpc": ["libs/shared-trpc/src/index.ts"],
+      "@kitchen-cpq/shared-kafka": ["libs/shared-kafka/src/index.ts"],
+      "@kitchen-cpq/domain-catalog": ["libs/domain-catalog/src/index.ts"],
+      "@kitchen-cpq/domain-configuration": ["libs/domain-configuration/src/index.ts"],
+      "@kitchen-cpq/domain-cpq": ["libs/domain-cpq/src/index.ts"],
+      "@kitchen-cpq/domain-manufacturing": ["libs/domain-manufacturing/src/index.ts"],
+      "@kitchen-cpq/instrumentation-otel": ["libs/instrumentation-otel/src/index.ts"],
+      "@kitchen-cpq/ui-kit": ["packages/ui-kit/src/index.ts"],
+      "@kitchen-cpq/3d-engine": ["packages/3d-engine/src/index.ts"],
+      "@kitchen-cpq/configurator-sdk": ["packages/configurator-sdk/src/index.ts"],
+      "@kitchen-cpq/geometry-kernel": ["packages/geometry-kernel/pkg"],
+      "@kitchen-cpq/proto-defs": ["packages/proto-defs/gen/ts/index.ts"],
+      "@kitchen-cpq/*": [
+        "libs/*/src/index.ts",
+        "packages/*/src/index.ts"
+      ]
+    }
+  },
+  "exclude": ["node_modules", "dist", "tmp"]
+}
+

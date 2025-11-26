@@ -1,0 +1,33 @@
+{
+  "name": "integrations-ecommerce-service",
+  "root": "services/integrations/ecommerce-service",
+  "sourceRoot": "services/integrations/ecommerce-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p services/integrations/ecommerce-service/tsconfig.app.json"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"lint integrations-ecommerce-service (stub)\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"test integrations-ecommerce-service (stub)\""
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo \"serve integrations-ecommerce-service (stub)\""
+      }
+    }
+  },
+  "tags": ["type:service", "scope:integrations", "integration:ecommerce"]
+}
