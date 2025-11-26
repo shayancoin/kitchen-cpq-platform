@@ -1,0 +1,48 @@
+---
+alwaysApply: false
+description: >
+  Govern how the Rust-based geometry-kernel is structured, compiled to WASM, and
+  consumed by TypeScript services and the 3D client.
+globs:
+  - "packages/geometry-kernel/src/**/*.rs"
+  - "packages/geometry-kernel/pkg/**/*.{ts,js}"
+  - "services/param-kernel-service/src/**/*.ts"
+---
+
+# Rust / WASM Geometry Kernel Workflow
+
+The Rust geometry kernel is the authoritative implementation of parametric
+geometry operations. :contentReference[oaicite:16]{index=16}  
+
+## 1. Rust Module Layout
+
+- `src/lib.rs`:
+  - Public API boundary: functions exposed to JS/WASM.
+- Submodules:
+  - `kernel/`: core geometry & topology operations.
+  - `constraints/`: geometric and configuration constraints.
+- No business logic (pricing, orders) is allowed in Rust.
+
+## 2. WASM Boundary
+
+- Use `wasm-pack`/`wasm-bindgen` to generate bindings:
+  - Expose **small, composable** functions (e.g. `apply_delta`, `validate_state`).
+  - Accept/return JSON strings or well-defined FFI structs, not ad-hoc blobs.
+- Ensure all exported functions are:
+  - Pure (no global mutable state).
+  - Deterministic for given inputs.
+
+## 3. Consumption Patterns
+
+- Front-end (3D configurator):
+  - Uses the WASM module for local geometric checks / previews only.
+- Backend (`param-kernel-service`):
+  - Calls the same Rust logic natively or via WASM, then wraps results in gRPC
+    responses (`ParametricKernelService`). :contentReference[oaicite:17]{index=17}  
+
+## 4. Testing & Safety
+
+- Rust unit tests for kernel and constraints must run in CI.
+- Add at least one test that:
+  - Loads the WASM module in a Node environment.
+  - Verifies a roundtrip call (`apply_delta`, `validate_design`) returns expected data.

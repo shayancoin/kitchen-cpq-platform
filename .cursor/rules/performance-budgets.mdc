@@ -1,0 +1,72 @@
+---
+alwaysApply: true
+description: >
+  Enforce strict latency budgets and performance constraints for all interactive paths,
+  aligned with the data-contracts-tRPC-gRPC-latency spec.
+globs:
+  - "apps/**/src/**/*.{ts,tsx}"
+  - "services/**/src/**/*.ts"
+  - "libs/instrumentation-otel/src/**/*.ts"
+  - "libs/shared-types/src/**/*.ts"
+---
+
+# Performance & Latency Budgets
+
+This rule encodes the platform-wide latency budgets. When adding or modifying APIs,
+the Agent must reason against these constraints and prefer designs that keep us
+safely inside the budgets.
+
+## 1. Global Principles
+
+- Treat the budgets in `data-contracts-tRPC-gRPC-latency.md` as **hard constraints**, not suggestions.   
+- Never introduce a new interactive network hop on the critical path without
+  explicitly allocating a slice of the latency budget.
+- Prefer **fewer RPCs with richer payloads** over many small calls on hot paths.
+- All new endpoints must be observable (traces + metrics) so we can measure P95/P99.
+
+## 2. Critical Paths (must stay within these limits)
+
+1. **Identity / initial shell load**
+
+   - Target: backend P95 < **50 ms** (excluding browser rendering).
+   - `auth.getSession` + `tenancy.getCurrentTenant` combined P95 ≤ **45 ms**.
+   - When changing auth/tenancy code: keep DB queries O(1) per request and index-backed.
+
+2. **Configurator drag → constraints + price update**
+
+   - End‑to‑end (`Browser → BFF → ParamKernel → CPQ → BFF → Browser`) P95 ≤ **150 ms**. :contentReference[oaicite:3]{index=3}  
+   - Segment budgets:
+     - Network in: 20 ms
+     - BFF internal (auth, Redis, routing): 10 ms
+     - `ParametricKernelService.ApplyDelta`: 30 ms
+     - `CpqService.PriceDelta`: 30 ms
+     - BFF marshalling: 10 ms
+     - Network out: 20 ms
+   - New logic in these calls **must not** add network hops or N+1 DB access.
+
+3. **AI copilot “live hint”**
+
+   - On‑canvas hints must feel instant; remote LLM calls are not allowed here.
+   - Use local heuristics / WASM only; keep additional compute per drag < **5 ms** on the main thread.
+
+4. **Non‑interactive / background**
+
+   - `CadCamService.GenerateArtifacts` P95 ≤ **30 s**.
+   - Entire `ManufacturingJobWorkflow` P95 ≤ **180 s** but front‑end must receive an
+     acknowledgement from `StartOrderWorkflow` in < **200 ms**. :contentReference[oaicite:4]{index=4}  
+
+## 3. Implementation Requirements
+
+- Any new service method added **on a critical path** must:
+  - Document its P95 budget in the code comment and in the central latency spec.
+  - Emit a histogram metric for latency with `{service, method}` labels.
+- Performance tests (k6/Artillery) must:
+  - Assert P95 ≤ budget for each endpoint in the spec.
+  - Run in CI for `main` and block merges on regressions > 10% over budget.
+
+## 4. Refactoring Guidance
+
+- If a change risks exceeding budget:
+  - Move heavy work to asynchronous workflows (Temporal) or background jobs.
+  - Cache immutable data (catalog snapshots, rule trees) in Redis or in‑process.
+  - Use batched gRPC calls instead of per‑entity RPCs.

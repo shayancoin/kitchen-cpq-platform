@@ -1,0 +1,49 @@
+---
+alwaysApply: false
+description: >
+  Define structure and best practices for the FastAPI-based optimization service
+  and shared layout-optimizer Python library.
+globs:
+  - "services/optimization-engine-service/**/*.py"
+  - "python-libs/layout-optimizer-lib/**/*.py"
+---
+# Python Optimization / OR-Tools Workflow
+
+The optimization engine (OR-Tools CP-SAT) and its FastAPI wrapper must follow a
+clear structure for reproducibility and performance.   
+
+## 1. Project Structure
+
+- `python-libs/layout-optimizer-lib`:
+  - `model.py`: problem model objects (rooms, modules, constraints).
+  - `constraints.py`: all constraint-building helpers.
+  - `solver.py`: CP-SAT model creation + solving entrypoints.
+- `services/optimization-engine-service`:
+  - FastAPI app that:
+    - Validates input (Pydantic) against TS/Proto shapes.
+    - Invokes `layout_optimizer.solver.solve(...)`.
+    - Translates solutions back to shared types / protos.
+
+## 2. Modeling Guidelines
+
+- Keep CP-SAT model creation in pure functions:
+  - Input: typed problem spec.
+  - Output: OR-Tools model + solution.
+- Avoid leaking OR-Tools internals into HTTP or gRPC layers.
+- Always set:
+  - Time limits (e.g. 50–100 ms for interactive calls).
+  - Search strategies appropriate for small/medium-sized MIPs.
+
+## 3. Performance & Determinism
+
+- Use OR-Tools’ parameters to favour reproducible solutions where possible.
+- For interactive use:
+  - Limit maximum layouts returned (e.g. 4).
+  - Consider warm-starting from previous solutions.
+
+## 4. Testing
+
+- Unit tests:
+  - Verify constraints enforce NKBA-style rules and internal ergonomic constraints.
+- Golden tests:
+  - Fix seed + input → assert solution layout remains within tolerance bands.

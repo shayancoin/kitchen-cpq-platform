@@ -1,0 +1,57 @@
+---
+alwaysApply: true
+description: >
+  Enforce consistent authentication, authorization, and tenant isolation for all apps
+  and services.
+globs:
+  - "apps/frontend/src/**/*.{ts,tsx}"
+  - "apps/api/src/**/*.ts"
+  - "services/**/src/**/*.ts"
+  - "libs/shared-auth/src/**/*.ts"
+  - "libs/shared-types/src/user.ts"
+---
+
+# Security, Auth & Tenancy
+
+This platform is multi-tenant and handles sensitive manufacturing data. The Agent
+must preserve strict auth and tenancy guarantees in all changes.
+
+## 1. Identity & Session
+
+- All identity and role information comes from the **Identity/Tenancy service** and
+  the shared types in `libs/shared-types`. Do not invent new user/tenant shapes.   
+- Only the BFF / gateway may decode and validate JWTs, using `libs/shared-auth`.
+- Front-end code must never trust user-controlled fields for identity/roles.
+
+## 2. Tenant Isolation
+
+- Every persistent entity (projects, quotes, orders, catalog versions, jobs) must
+  include a `tenantId` field and be constrained by it at query time.
+- Database access must:
+  - Filter by `tenantId` for all queries except global metadata.
+  - Use Row-Level Security (RLS) where supported.
+- Cross-tenant queries are forbidden unless explicitly documented and guarded.
+
+## 3. Authorization
+
+- Use shared role types (`Role = 'consumer' | 'dealer' | 'catalog_engineer' | 'manufacturing_engineer' | 'admin'`).
+- All privileged operations (publishing catalogs, editing rules, starting manufacturing
+  workflows) must:
+  - Check role-based permissions via `libs/shared-auth`.
+  - Log the actor (`user.id`, `tenant.id`) and the operation.
+
+## 4. Service-to-Service Security
+
+- Internal services must authenticate via mTLS and/or signed service tokens.
+- Never expose internal gRPC ports publicly; only via the API gateway or internal mesh.
+- When adding a new gRPC method, ensure:
+  - Caller identity is enforced at the gateway or mesh layer.
+  - Authorization decisions use shared roles and tenant data, not IP addresses.
+
+## 5. AI & Security
+
+- The AI/Agent service cannot:
+  - Write directly to databases.
+  - Bypass auth/tenant checks.
+- AI actions that affect persistent state must go through existing, authorized
+  application services (e.g. CPQ, configurator, catalog).

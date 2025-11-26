@@ -1,0 +1,63 @@
+---
+alwaysApply: true
+---
+---
+description: >
+  Define the testing pyramid (unit, integration, e2e, performance) and how it
+  maps to apps/, services/, libs/, and packages/.
+globs:
+  - "apps/**/src/**/*.{ts,tsx}"
+  - "services/**/src/**/*.ts"
+  - "libs/**/src/**/*.ts"
+  - "packages/**/src/**/*.{ts,tsx,rs}"
+alwaysApply: true
+---
+
+# Testing Strategy & CI Guardrails
+
+All new code must fit the testing strategy below. The Agent should propose tests
+as part of any non-trivial change.   
+
+## 1. Unit Tests
+
+- Location:
+  - Co-locate as `*.test.ts` / `*.spec.ts` in `libs/`, `services/`, `apps/`.
+- Focus:
+  - Pure functions in domain libs (`domain-*`).
+  - Pricing logic, rule evaluation, constraint checking.
+- Tools:
+  - Vitest/Jest for TS.
+  - Rust `cargo test` for geometry kernel.
+  - Pytest for Python libraries.
+
+## 2. Integration Tests
+
+- Targets:
+  - tRPC endpoints in `apps/api`.
+  - gRPC boundaries between BFF and services.
+  - FastAPI optimization endpoints.
+- Use test containers (Postgres, Kafka, Redis) to exercise realistic flows:
+  - Identity → configurator → CPQ → CAD/CAM.
+
+## 3. End-to-End (E2E) Tests
+
+- Front-end flows:
+  - Use Playwright/Cypress to test:
+    - Login.
+    - Create project.
+    - Configure kitchen.
+    - Generate quote.
+- Manufacturing flows:
+  - Simulate order → workflow start → BOM/CNC readiness.
+
+## 4. Performance Tests
+
+- Use k6/Artillery to:
+  - Validate latency budgets for critical endpoints (see performance rule).
+  - Run as a separate CI job; failures should block merges to `main`.
+
+## 5. CI Expectations
+
+- Every PR touching core flows (auth, configurator, CPQ, CAD/CAM) must:
+  - Add or update tests.
+  - Keep coverage from regressing, especially in shared libs and services.

@@ -1,0 +1,53 @@
+---
+alwaysApply: true
+---
+---
+description: >
+  Govern how services publish and consume Kafka events using libs/shared-events
+  and ensure forward-compatible schemas.
+globs:
+  - "libs/shared-events/src/**/*.ts"
+  - "services/**/src/**/*.ts"
+alwaysApply: false
+---
+
+# Kafka Events & Shared Event Contracts
+
+All inter-service events must use the canonical contracts in `libs/shared-events`
+and follow strict versioning rules. :contentReference[oaicite:13]{index=13}  
+
+## 1. Canonical Event Definitions
+
+- Define topics and payloads in `libs/shared-events` only:
+  - Examples: `configuration.updated`, `quote.created`, `order.confirmed`,
+    `bom.generated`, `cnc.job.created`. :contentReference[oaicite:14]{index=14}  
+- Services must import these types instead of redefining payload shapes.
+
+## 2. Schema Evolution
+
+- Events are **append-only**:
+  - You may add optional fields.
+  - You may not remove or repurpose existing fields.
+- If a breaking change is unavoidable:
+  - Introduce a new event version/topic.
+  - Keep the old one until all consumers have migrated.
+
+## 3. Publishing Rules
+
+- Publisher responsibilities:
+  - Validate payload against the shared schema.
+  - Include `tenantId`, `projectId`/`quoteId` when applicable.
+  - Avoid embedding large binary blobs; store in object storage and reference by URI.
+
+## 4. Consumption Rules
+
+- Consumers must:
+  - Be idempotent (handle duplicates).
+  - Tolerate unknown fields.
+  - Use dead-letter queues for unrecoverable payload errors, not crash loops.
+
+## 5. New Services
+
+- When creating a service that reacts to domain events:
+  - Subscribe via shared Kafka helper module (`libs/shared-kafka`).
+  - Keep consumer logic small; delegate business rules to domain libraries.

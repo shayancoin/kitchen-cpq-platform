@@ -1,0 +1,54 @@
+---
+alwaysApply: true
+---
+---
+description: >
+  Define the architecture and performance rules for the Babylon-based 3D configurator,
+  including separation between rendering, parametric state, and pricing.
+globs:
+  - "packages/3d-engine/src/**/*.ts"
+  - "packages/configurator-sdk/src/**/*.ts"
+  - "apps/frontend/app/cpq/configure/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# 3D Configurator & Babylon Engine
+
+The 3D configurator is a thin rendering shell over the canonical parametric state
+and pricing engines. It must never become the source of truth.
+
+## 1. Separation of Concerns
+
+- **State of record**:
+  - The canonical configuration state lives in the parametric kernel and backend
+    services (`services/param-kernel-service`, `services/configurator-session-service`).   
+- The Babylon scene (`packages/3d-engine`) is a **projection** of that state:
+  - It may hold view-only state (camera, selection, hover, gizmos).
+  - Structural changes must always result from a parametric delta applied via BFF.
+
+## 2. Interaction Flow
+
+- User interactions (drag, add/remove cabinet, change option) must:
+  1. Compute a **parametric delta** (no imperative geometry edits).
+  2. Call the BFF via tRPC to apply the delta (which calls the kernel + CPQ). :contentReference[oaicite:8]{index=8}  
+  3. Receive an updated canonical state + constraint summary + price changes.
+  4. Re-render the Babylon scene from the updated state.
+- No direct DB or pricing logic inside 3D engine or React components.
+
+## 3. Performance Rules
+
+- Target **60 FPS**:
+  - Main-thread JS work per frame ≤ 3–4 ms.
+  - Heavy geometry work must be offloaded to Web Workers and/or WASM.
+- Use:
+  - Instancing for repeated cabinet meshes.
+  - LODs or simplified meshes for distant geometry.
+  - Pre-baked static meshes for walls/fixed structure.
+
+## 4. Embeddable SDK
+
+- `packages/configurator-sdk` exposes a stable host API:
+  - `init(container, tenantId, locale, authToken, callbacks...)`.
+- All host integrations (dealer sites, B2C flows) must:
+  - Use the SDK API instead of reaching into internal React/Babylon APIs.
+  - Treat configuration IDs and project IDs as opaque references.
