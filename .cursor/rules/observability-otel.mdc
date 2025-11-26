@@ -1,0 +1,61 @@
+---
+alwaysApply: true
+---
+
+---
+description: >
+  Standardize tracing, metrics, and logging using the instrumentation-otel library
+  across all TypeScript services.
+globs:
+  - "services/**/src/**/*.ts"
+  - "libs/instrumentation-otel/src/**/*.ts"
+  - "libs/shared-*/src/**/*.ts"
+alwaysApply: false
+---
+
+# Observability & OpenTelemetry
+
+All TypeScript services must use the shared OpenTelemetry helpers in
+`libs/instrumentation-otel` for tracing, metrics, and structured logging. :contentReference[oaicite:5]{index=5}  
+
+## 1. Tracing
+
+- Every externally reachable handler **must** start or join a span:
+  - HTTP (tRPC / REST) handlers in `apps/api`.
+  - gRPC handlers in NestJS services.
+  - Temporal activities/workflows.
+- Span naming convention:
+  - `ServiceName.MethodName` (e.g. `ConfiguratorSession.ApplyDelta`,
+    `Cpq.PriceDelta`, `CadCam.GenerateArtifacts`).
+- Attach these attributes whenever available:
+  - `tenant.id`, `user.id`, `project.id`, `quote.id`, `workflow.id`.
+- Do **not** record sensitive data (emails, JWTs, raw CNC code) in span attributes.
+
+## 2. Metrics
+
+- Use the shared metrics helpers for:
+  - Request latency histograms, tagged by `{service, method}`.
+  - Error counters with `{service, method, error_code}`.
+  - Background job timings (Temporal activities, batch jobs).
+- For endpoints with explicit budgets (see performance rule), define metrics with
+  bucket boundaries that make P95/P99 easy to monitor.
+
+## 3. Logging
+
+- Use the shared logger from `instrumentation-otel` instead of ad‑hoc `console.log`.
+- All logs must be:
+  - Structured JSON.
+  - Correlated with traces via `trace_id` / `span_id`.
+- Log at correct levels:
+  - `info` for normal business events.
+  - `warn` for recoverable anomalies.
+  - `error` only for failures that impact correctness or UX.
+
+## 4. New Service Checklist
+
+When creating a new service under `services/`:
+
+1. Wire the OpenTelemetry SDK from `libs/instrumentation-otel`.
+2. Add basic HTTP/gRPC middleware to start spans and record latency.
+3. Expose a `/health` endpoint and at least one metrics endpoint (or OTLP export).
+4. Add a minimal Grafana dashboard for the service (latency, errors, throughput).

@@ -1,0 +1,58 @@
+---
+alwaysApply: true
+---
+---
+description: >
+  Standardize use of Temporal for long-running workflows such as quote lifecycle
+  and manufacturing pipelines.
+globs:
+  - "services/workflow-orchestration-service/src/**/*.ts"
+  - "services/**/src/workflows/**/*.ts"
+  - "libs/shared-types/src/workflow.ts"
+alwaysApply: false
+---
+
+# Temporal Workflows & Long-Running Processes
+
+Any multi-step, long-running business process must use Temporal workflows rather
+than ad-hoc sagas or custom retry logic.   
+
+## 1. When to Use Temporal
+
+Use a workflow for:
+
+- Quote lifecycle: creation → approvals → expiry.
+- Order → payment capture → manufacturing job → shipment.
+- CAD/CAM artifact generation and re-runs after catalog updates.
+
+Avoid implementing these as naked queues or chained cron jobs.
+
+## 2. Workflow Design
+
+- Workflows are **pure orchestration**:
+  - No direct DB access.
+  - Compose activities that call domain services (CPQ, CAD/CAM, ERP adapters).
+- Activities must be:
+  - Idempotent.
+  - Retry-safe.
+  - Bounded in time (seconds, not minutes).
+
+## 3. API Boundaries
+
+- External entrypoint: e.g. `WorkflowService.StartOrderWorkflow` which kicks off
+  `KitchenOrderWorkflow`. :contentReference[oaicite:12]{index=12}  
+- Front-end receives:
+  - Immediate acknowledgement (workflow instance ID) within < 200 ms.
+  - Status updates via polling, push, or event streams.
+
+## 4. Versioning & Changes
+
+- When changing workflow logic:
+  - Use Temporal’s versioning features; never break in-flight workflows.
+  - Keep workflow IDs and version tags in shared types.
+
+## 5. Observability
+
+- Every workflow must:
+  - Emit events for major transitions (created, running, completed, failed).
+  - Expose metrics: active workflows, success/failure counts, duration histograms.

@@ -1,0 +1,58 @@
+---
+alwaysApply: true
+---
+---
+description: >
+  Constrain how LLMs and agents interact with deterministic engines (kernel, CPQ,
+  CAD/CAM) so AI is assistive, never authoritative.
+globs:
+  - "services/ai-agent-service/src/**/*.ts"
+  - "libs/shared-types/src/ai.ts"
+  - "apps/frontend/app/cpq/copilot/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# AI / Agentic Architecture
+
+AI is a copilot and orchestration layer on top of deterministic engines. It cannot
+be the source of truth for geometry, pricing, or manufacturing.
+
+## 1. Data Contracts
+
+- Use the canonical AI types from `libs/shared-types/src/ai.ts`:
+  - `CopilotMessage`, `ToolCall`, `CopilotTurn`, `IntentParameters`. :contentReference[oaicite:9]{index=9}  
+- Do not create ad-hoc JSON blobs for intent; extend the shared types instead.
+
+## 2. Tool-Calling Only
+
+- LLMs/agents may **only** act via tools that wrap existing services:
+  - `paramEngine.applyDelta` → `ParametricKernelService.ApplyDelta`.
+  - `optimizer.solveLayout` → `OptimizationService.SuggestLayouts`.
+  - `cpq.recomputeQuote` → `CpqService.RecomputeQuote`.
+  - `cadcam.generateArtifacts` → `CadCamService.GenerateArtifacts`.   
+- Tools must be:
+  - Idempotent.
+  - Authenticated and tenant-aware.
+  - Logged for audit (who/what triggered the action).
+
+## 3. Safety & Validation
+
+- All AI-proposed changes must:
+  - Be expressed as structured deltas (`ParamDelta[]`).
+  - Go through the same validation paths as human edits (constraints + CPQ).
+- It is forbidden for AI to:
+  - Directly mutate DBs or object storage.
+  - Generate G-code that bypasses CAD/CAM validation.
+
+## 4. UX Modes
+
+- **Live editing hints**:
+  - Must not block UI; use local heuristics or small on-device models only.
+- **Design suggestions** (e.g. “make it more family-friendly”):
+  - Can call remote LLMs; show progress UI and apply changes only after
+    deterministic validation passes.
+
+## 5. Logging
+
+- Every AI/copilot session is logged via `CopilotService.LogEvent` or equivalent:
+  - Include `sessionId`, `projectId`, and a summarized intent.
