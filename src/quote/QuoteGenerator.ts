@@ -89,7 +89,7 @@ export class QuoteGenerator {
    */
   private generateQuoteId(): string {
     const timestamp = Date.now();
-    const random = Math.random().toString(36).substr(2, 9).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 11).toUpperCase();
     return `QT-${timestamp}-${random}`;
   }
 
