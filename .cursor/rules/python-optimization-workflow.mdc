@@ -1,16 +1,12 @@
 ---
-alwaysApply: true
----
----
+alwaysApply: false
 description: >
   Define structure and best practices for the FastAPI-based optimization service
   and shared layout-optimizer Python library.
 globs:
   - "services/optimization-engine-service/**/*.py"
   - "python-libs/layout-optimizer-lib/**/*.py"
-alwaysApply: false
 ---
-
 # Python Optimization / OR-Tools Workflow
 
 The optimization engine (OR-Tools CP-SAT) and its FastAPI wrapper must follow a
