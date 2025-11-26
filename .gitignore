@@ -14,10 +14,4 @@ coverage
 *.tsbuildinfo
 .cache
 pnpm-lock.yaml
-.turbo
-.nx
-.idea
-.vscode
-tmp
-.DS_Store
-
+external-templates/
