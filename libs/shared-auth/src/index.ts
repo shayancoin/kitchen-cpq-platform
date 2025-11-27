@@ -14,6 +14,16 @@ type VerifyOptions = {
   issuer?: string | string[];
 };
 
+/**
+ * Validate and decode a JSON Web Token into AuthClaims.
+ *
+ * @param token - The JWT string to verify and decode.
+ * @param options - Optional verification overrides: `secret` to override the environment JWT secret, and `audience`/`issuer` forwarded to the verifier.
+ * @returns The token's authenticated claims: `sub`, `tenantId`, `roles`, and optional `email`.
+ * @throws Error('JWT secret is not configured') if no secret is provided and `process.env.JWT_SECRET` is not set.
+ * @throws Error('Invalid token payload') if the decoded token payload is a string.
+ * @throws Error('Invalid or missing JWT claims') if `sub`, `tenantId`, or `roles` are missing or malformed.
+ */
 export function verifyAuthToken(token: string, options: VerifyOptions = {}): AuthClaims {
   const secret = options.secret ?? process.env.JWT_SECRET;
 

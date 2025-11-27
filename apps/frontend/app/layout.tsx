@@ -7,6 +7,12 @@ export const metadata = {
   description: 'Multi-tenant CPQ + Studio console'
 };
 
+/**
+ * Application root layout that provides the top-level HTML structure and wraps page content with Providers.
+ *
+ * @param children - The application content to render inside the body; it will be wrapped by the Providers component.
+ * @returns The top-level `html` and `body` elements with styling, containing the provided `children` wrapped by `Providers`.
+ */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">

@@ -24,6 +24,12 @@ export interface QuoteWorkflowInput {
   tenantId: TenantId;
 }
 
+/**
+ * Orchestrates quote recomputation for the given project and tenant.
+ *
+ * @param input - Contains `projectId` and `tenantId` identifying the scope for recomputation.
+ * @returns An object with an optional `quoteId`; currently `quoteId` is `undefined`.
+ */
 export async function QuoteWorkflow(
   input: QuoteWorkflowInput
 ): Promise<{ quoteId?: QuoteId }> {
