@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.app.json"
   },
   "dependencies": {
-    "@nestjs/common": "^9.4.3",
+    "@nestjs/common": "^11.1.9",
     "@nestjs/core": "^9.4.3",
     "@nestjs/platform-express": "^9.4.3",
     "@trpc/server": "^10.45.2",

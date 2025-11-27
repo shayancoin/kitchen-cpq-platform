@@ -10,7 +10,7 @@
     "test": "echo \"No tests configured\" && exit 0"
   },
   "dependencies": {
-    "@nestjs/common": "^9.4.3",
+    "@nestjs/common": "^11.1.9",
     "@nestjs/core": "^9.4.3",
     "@nestjs/platform-express": "^9.4.3",
     "reflect-metadata": "^0.1.14",
