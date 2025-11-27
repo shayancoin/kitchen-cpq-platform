@@ -25,7 +25,7 @@ export default function SubdomainLanding({ params }: SubdomainPageProps) {
       if (!res.ok) {
         throw new Error(json?.message ?? 'Login failed');
       }
-      document.cookie = `Authorization=${json.jwt}; path=/`;
+      document.cookie = `auth_token=${json.jwt}; path=/; SameSite=Lax`;
       setSession(json.id);
       setStatus('Session issued');
     } catch (err) {

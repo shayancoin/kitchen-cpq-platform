@@ -25,11 +25,22 @@ Adopt the `phmz/nx-nest-react-monorepo-template` as the skeleton, substituting i
 Surgical Integration Plan  
 1\. **Monorepo Initialization:** Instantiate the `phmz/nx-nest-react-monorepo-template`. Define `shared-types` library for canonical configuration schema, Bills of Material (B), and CNC job structures.  
 2\. **SaaS Shell Integration:** Replace the default Monorepo front-end application with the multi-tenant routing logic from the `vercel/platforms` example, ensuring all user flows (consumer, dealer, admin) are tenant-aware and segregated by subdomain or path.  
-3\. **Identity Management:** Integrate the core identity model (users, tenants, roles) by lifting proven patterns from the `wasp-lang/open-saas` boilerplate. This ensures a robust Role-Based Access Control (RBAC) foundation across all derived microservices.  
-4\. **Type Coherence:** Utilize **tRPC** (from a template like `t3-oss/create-t3-app`) within the BFF/Gateway services to ensure strict type safety (F  
+3. **Identity Management:** Integrate the core identity model (users, tenants, roles) by lifting proven patterns from the `wasp-lang/open-saas` boilerplate. This ensures a robust Role-Based Access Control (RBAC) foundation across all derived microservices.  
+4. **Type Coherence:** Utilize **tRPC** (from a template like `t3-oss/create-t3-app`) within the BFF/Gateway services to ensure strict type safety (F  
 correctness  
 ​  
 ) between the React front-end and the core services.  
+5. **Identity/JWT + cache topology (to uphold sub-50 ms path):**  
+* **Latency budget breakdown (≤45 ms backend auth stack):**  
+  * `auth.getSession`: 20 ms P95 (JWT parse + cache fetch).  
+  * `tenancy.getCurrentTenant`: 15 ms P95 (cache fetch; DB on miss).  
+  * Marshalling/overhead: 10 ms P95 (serialization, middleware).  
+  Total ≤45 ms; target overall end-to-end (with network) <70 ms.  
+* **Service boundary:** Prefer co-located calls (single process or single RPC hop). If split, treat as two RPCs with the above per-call budgets.  
+* **Cold-path behavior:** On cache miss, allow DB read + repopulate; expect misses to be rare (e.g., <5%). P95 must remain within the 45 ms budget by amortization (cold path heavier but infrequent).  
+* **Cache invalidation:** Redis per region, TTL ≈300s. Warm on login/session issuance. Evict/invalidate on logout, role/permission changes via pub/sub (preferred) or polling; accept eventual consistency for non-critical profile fields.  
+* **Cross-region fallback:** Avoid on hot path; if invoked, bound timeouts to ≤20 ms additional. Fallback behavior: serve stale (within TTL) if primary region unavailable; otherwise fail fast with clear error (no unbounded retries).  
+* **JWT verification:** Local validation with public-key crypto (Ed25519 or RSA). Distribute/rotate keys with overlap; no remote introspection hop.  
 The Engines Integration  
 (Not applicable in this step; focus is on structural initialization.)  
 "The UI" Integration  
@@ -94,35 +105,25 @@ The Next.js front-end will integrate the Babylon.js 3D viewer (seeded by `eldino
 • **Layout Solver:** `fastapi-microservice-template` \+ `d-krupke/cpsat-primer`.  
 • **3D Viewer:** `eldinor/bp800` (Babylon.js 8 \+ Vite).  
 "The Flow" \- Golden Path Integration  
-Phase P  
-2  
-​  
-(Topological Optimization) is integrated here: user defines constraints (P  
-1  
-​  
-) → BFF calls Optimization Engine (sync call ≤100 ms) → Optimization Engine returns prioritized feasible layout solutions (Pareto Front candidates) → BFF updates 3D view with candidates in the *Layout Gallery*.  
+Phase P2 (Topological Optimization) is integrated here: user defines constraints (P1) → BFF calls Optimization Engine (sync call ≤100 ms) → Optimization Engine returns prioritized feasible layout solutions (Pareto Front candidates) → BFF updates 3D view with candidates in the *Layout Gallery*.  
+**Interactive CP-SAT specification (sub-50 ms interactive ΔParams path)**  
+1. **Solver limits (hard, deterministic):** set `max_time_in_seconds` to 0.03–0.05 for the interactive path; use `num_search_workers = 1` and a fixed seed to preserve determinism.  
+2. **Early exit / interrupt:** always register solution callbacks; on time budget hit, call `StopSearch()` (or equivalent) and return the best feasible solution captured so far. Atomic interrupt flags are acceptable if callbacks aren’t available.  
+3. **Warm starts / hints:** every ΔParams call must feed the prior best assignment as a hint; keep stable variable IDs so hints map correctly between successive models.  
+4. **Model size guardrails:** typical interactive target is <50 variables and <200 constraints; if the model exceeds this, skip CP-SAT and immediately fall back to a cached/greedy heuristic (no attempt to solve under 50 ms).  
+5. **Fallback and UX contract:** if time budget hits, return status `STOPPED` with best-known feasible (or cached) solution; if infeasible is proven, return `FEASIBLE=false` with violated constraints. The UI must treat `STOPPED/FEASIBLE` as non-fatal, render best-known state, and badge “limited by time budget.”  
+6. **Verification plan:** maintain a benchmark harness with representative ΔParams scenarios (10–20 cases). Measure median and P90 latencies; success criteria: median ≤30 ms and P90 ≤50 ms for typical models (<50 vars/<200 constraints), deterministic outputs with fixed seed, zero crashes.  
 Technical Implementation Priorities  
 1\. Establish gRPC or high-efficiency HTTP/JSON communication between the BFF and the specialized Python/Rust services.  
 2\. Implement caching in Redis (leveraged from fastapi-microservice-template) within the BFF for frequently accessed configuration state and pre-computed design heuristics.  
 Deliverables  
-Deterministic Parametric Kernel exposed via a low-latency BFF API (targeting *T*  
-latency  
-​  
-\<50 ms) and a dedicated OR-Tools layout solver microservice.  
+Deterministic Parametric Kernel exposed via a low-latency BFF API (targeting *T*latency<50 ms) and a dedicated OR-Tools layout solver microservice, with explicit CP-SAT limits and fallbacks.  
 Performance  
-Verification of the target latency constraint: API  
-CFG-BFF  
-​  
-:State×ΔParams→State  
-′  
-×*T*  
-latency  
-​  
-\<50 ms.  
+Verification of the target latency constraint: APICFG-BFF:State×ΔParams→State′×*T*latency<50 ms, measured via the benchmark harness above.  
 UX Coherence  
-The core three-pane layout is implemented, embedding the 3D Babylon viewer into the center canvas.  
+The core three-pane layout is implemented, embedding the 3D Babylon viewer into the center canvas, and surfaces `STOPPED/FEASIBLE` statuses with time-budget badges.  
 Expected Outcomes  
-Real-time, physically constrained geometric configuration feedback is enabled, guaranteeing computational precision.
+Real-time, physically constrained geometric configuration feedback with deterministic, bounded-time optimization behavior.
 
 \--------------------------------------------------------------------------------
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { LoginForm } from '@kitchen-cpq/ui-kit';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -20,8 +21,7 @@ export default function LoginPage() {
     }
   }, []);
 
-  const onSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const onSubmit = async ({ email: nextEmail, tenantId: nextTenant }: { email: string; tenantId: string }) => {
     setLoading(true);
     setError(null);
     try {
@@ -30,7 +30,7 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, tenantId })
+        body: JSON.stringify({ email: nextEmail, tenantId: nextTenant })
       });
       if (!res.ok) {
         throw new Error(`Login failed: ${res.status}`);
@@ -47,47 +47,17 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-lg"
-      >
-        <div className="space-y-1">
-          <p className="text-sm text-slate-500">Kitchen CPQ</p>
-          <h1 className="text-2xl font-semibold text-slate-900">Sign in</h1>
-        </div>
-        <label className="block space-y-1">
-          <span className="text-sm text-slate-700">Email</span>
-          <input
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            name="email"
-            required
-          />
-        </label>
-        <label className="block space-y-1">
-          <span className="text-sm text-slate-700">Tenant</span>
-          <input
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
-            value={tenantId}
-            onChange={(e) => setTenantId(e.target.value)}
-            name="tenant"
-            required
-          />
-        </label>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-        >
-          {loading ? 'Signing in…' : 'Sign in'}
-        </button>
-        <p className="text-xs text-slate-500">
-          Issues a short-lived JWT from the API and stores it in an auth_token cookie for tRPC calls.
-        </p>
-      </form>
+      <LoginForm
+        defaultEmail={email}
+        defaultTenantId={tenantId}
+        loading={loading}
+        error={error ?? undefined}
+        onSubmit={(values: { email: string; tenantId: string }) => {
+          setEmail(values.email);
+          setTenantId(values.tenantId);
+          return onSubmit(values);
+        }}
+      />
     </main>
   );
 }

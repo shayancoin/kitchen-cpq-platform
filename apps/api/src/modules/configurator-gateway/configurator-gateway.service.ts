@@ -29,11 +29,38 @@ export class ConfiguratorGatewayService {
   }
 
   applyDeltas(state: ParametricState, deltas: ParamDelta[]): ParametricState {
-    const touched = deltas.length > 0;
-    return {
-      ...state,
-      updatedAt: touched ? nowIso() : state.updatedAt
+    if (deltas.length === 0) {
+      return state;
+    }
+
+    // Deep clone the state to avoid mutating callers.
+    const nextState: ParametricState = JSON.parse(JSON.stringify(state));
+
+    const setPath = (target: any, path: string, value: any) => {
+      const segments = path.split('.');
+      let cursor = target;
+      for (let i = 0; i < segments.length; i++) {
+        const keyRaw = segments[i];
+        const isLast = i === segments.length - 1;
+        const key: string | number = Number.isNaN(Number(keyRaw)) ? keyRaw : Number(keyRaw);
+
+        if (isLast) {
+          cursor[key] = value;
+        } else {
+          if (cursor[key] === undefined) {
+            cursor[key] = {};
+          }
+          cursor = cursor[key];
+        }
+      }
     };
+
+    for (const delta of deltas) {
+      setPath(nextState, delta.path, delta.value);
+    }
+
+    nextState.updatedAt = nowIso();
+    return nextState;
   }
 
   layoutVariants(state: ParametricState): LayoutVariant[] {
@@ -52,7 +79,7 @@ export class ConfiguratorGatewayService {
     ];
   }
 
-  constraintSummary(): ConstraintSummary {
+  constraintSummary(_state?: ParametricState): ConstraintSummary {
     return { hasBlockingErrors: false, violations: [] };
   }
 }

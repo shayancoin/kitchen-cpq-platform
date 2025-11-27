@@ -12,11 +12,24 @@ const extractBearer = (req: CreateExpressContextOptions['req']): string | undefi
   return undefined;
 };
 
+const extractAuthCookie = (req: CreateExpressContextOptions['req']): string | undefined => {
+  const raw = req.headers['cookie'];
+  if (typeof raw !== 'string') return undefined;
+  const cookies = raw.split(';').map((c) => c.trim());
+  const auth = cookies.find((c) => c.startsWith('auth_token='));
+  return auth ? decodeURIComponent(auth.split('=').slice(1).join('=')) : undefined;
+};
+
 export function createContext({ req }: CreateExpressContextOptions): TrpcContext {
   const config = loadConfig();
-  const fallbackTenant = (req.headers['x-tenant-id'] as string | undefined) ?? 'tenant-demo';
-  const fallbackUser = (req.headers['x-user-id'] as string | undefined) ?? 'user-demo';
-  const token = extractBearer(req);
+
+  const rawTenant = req.headers['x-tenant-id'];
+  const rawUser = req.headers['x-user-id'];
+  const fallbackTenant =
+    typeof rawTenant === 'string' ? rawTenant : Array.isArray(rawTenant) ? rawTenant[0] : 'tenant-demo';
+  const fallbackUser =
+    typeof rawUser === 'string' ? rawUser : Array.isArray(rawUser) ? rawUser[0] : 'user-demo';
+  const token = extractBearer(req) ?? extractAuthCookie(req);
 
   let userId = fallbackUser as UserId;
   let tenantId = fallbackTenant as TenantId;

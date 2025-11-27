@@ -17,9 +17,10 @@
       }
     },
     "test": {
-      "executor": "nx:run-commands",
+      "executor": "@nx/jest:jest",
       "options": {
-        "command": "echo \"test shared-events (stub)\""
+        "jestConfig": "libs/shared-events/jest.config.ts",
+        "passWithNoTests": false
       }
     }
   },

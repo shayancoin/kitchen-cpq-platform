@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UnauthorizedException } from '@nestjs/common';
 import type { ParametricState, QuoteSummary, TenantId } from '@kitchen-cpq/shared-types';
 import { CpqGatewayService } from './cpq-gateway.service';
 
@@ -11,7 +11,11 @@ export class CpqGatewayController {
     @Param('projectId') projectId: string,
     @Query('tenantId') tenantId?: string
   ): QuoteSummary {
-    return this.cpqGatewayService.buildQuote(projectId, (tenantId ?? 'tenant-demo') as TenantId);
+    if (!tenantId) {
+      throw new UnauthorizedException('tenantId is required');
+    }
+
+    return this.cpqGatewayService.buildQuote(projectId, tenantId as TenantId);
   }
 
   @Get('state/:projectId')
@@ -19,6 +23,10 @@ export class CpqGatewayController {
     @Param('projectId') projectId: string,
     @Query('tenantId') tenantId?: string
   ): ParametricState {
-    return this.cpqGatewayService.buildParametricState(projectId, (tenantId ?? 'tenant-demo') as TenantId);
+    if (!tenantId) {
+      throw new UnauthorizedException('tenantId is required');
+    }
+
+    return this.cpqGatewayService.buildParametricState(projectId, tenantId as TenantId);
   }
 }

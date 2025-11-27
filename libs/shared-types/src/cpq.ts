@@ -48,3 +48,12 @@ export interface QuoteSummary {
   lineItems: QuoteLineItem[];
 }
 
+export interface PriceSnapshot {
+  currency: CurrencyCode;
+  total: number;
+  subtotal?: number;
+  tax?: number;
+  discounts?: number;
+  marginPercent?: number;
+  updatedAt?: ISODateTime;
+}

@@ -1,15 +1,21 @@
 declare module '@kitchen-cpq/configurator-sdk' {
-  export type SDKCallbacks = {
-    onError?: (error: unknown) => void;
-    onLoadComplete?: () => void;
-  } & Record<string, unknown>;
+  import type { ParametricDelta, PriceSnapshot } from '@kitchen-cpq/shared-types';
 
-  export type ConfiguratorSession = { destroy?: () => void } & Record<string, unknown>;
+  export type SDKCallbacks = {
+    onDeltaApplied?: (delta: ParametricDelta) => void;
+    onError?: (error: Error | unknown) => void;
+    onLoadComplete?: () => void;
+    onPriceChange?: (price: PriceSnapshot) => void;
+  };
+
+  export interface ConfiguratorSession {
+    destroy: () => void;
+  }
   export function init(
     container: HTMLElement,
     tenantId: string,
     locale: string,
     authToken: string,
-    callbacks?: SDKCallbacks
+    callbacks: SDKCallbacks
   ): ConfiguratorSession;
 }

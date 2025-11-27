@@ -1,5 +1,6 @@
+import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 import type {
   CatalogSnapshotRef,
   CatalogVersion,
@@ -22,6 +23,11 @@ import type {
 } from '@kitchen-cpq/shared-types';
 import { CabinetInstanceId, CatalogVersionId, TenantId, UserId } from '@kitchen-cpq/shared-types';
 import { protectedProcedure, publicProcedure, router, type TrpcContext } from '../trpc';
+import {
+  mutableCabinetKeySchema,
+  parseCabinetField,
+  type MutableCabinetKey
+} from '@kitchen-cpq/shared-validation';
 
 type BaseEntities = {
   tenant: Tenant;
@@ -116,19 +122,40 @@ const buildParametricState = (projectId: ProjectId, tenantId: TenantId): Paramet
   updatedAt: nowIso()
 });
 
+const validateParameterValue = (value: unknown): string | number | boolean => {
+  if (typeof value === 'string' || typeof value === 'boolean') return value;
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid parameter value' });
+};
+
 const applyDeltas = (state: ParametricState, deltas: ParamDelta[]): ParametricState => {
   const next = { ...state, cabinets: state.cabinets.map((c) => ({ ...c })), updatedAt: nowIso() };
   for (const delta of deltas) {
     if (delta.path.startsWith('cabinets.')) {
-      const [, cabinetId, prop] = delta.path.split('.');
+      const [, cabinetId, ...rest] = delta.path.split('.');
       const target = next.cabinets.find((c) => c.id === cabinetId);
-      if (target && prop && prop in target) {
-        // @ts-expect-error: dynamic assignment for stub behavior
-        target[prop] = delta.value;
+      if (!target || rest.length === 0) continue;
+
+      const [first, ...paramParts] = rest;
+      if (first === 'parameters') {
+        const paramKey = paramParts.join('.');
+        if (paramKey) {
+          target.parameters[paramKey] = validateParameterValue(delta.value);
+        }
+        continue;
       }
-      if (target && prop?.startsWith('parameters')) {
-        const paramKey = prop.replace('parameters.', '');
-        target.parameters[paramKey] = delta.value as string | number | boolean;
+
+      if (first && mutableCabinetKeySchema.safeParse(first).success) {
+        const key = first as MutableCabinetKey;
+        try {
+          const validated = parseCabinetField(key, delta.value);
+          target[key] = validated;
+        } catch (err) {
+          if (err instanceof ZodError) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: err.errors.map((e) => e.message).join('; ') });
+          }
+          throw err;
+        }
       }
     }
   }
