@@ -7,7 +7,7 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo \"build param-kernel-service (stub)\""
+        "command": "tsc -p services/param-kernel-service/tsconfig.app.json"
       }
     },
     "lint": {
@@ -19,7 +19,7 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo \"test param-kernel-service (stub)\""
+        "command": "jest --config services/param-kernel-service/jest.config.cjs"
       }
     },
     "serve": {

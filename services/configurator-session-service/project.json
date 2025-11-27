@@ -19,7 +19,7 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo \"test configurator-session-service (stub)\""
+        "command": "jest --config services/configurator-session-service/jest.config.cjs"
       }
     },
     "serve": {

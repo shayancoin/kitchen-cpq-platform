@@ -30,7 +30,7 @@
       "@kitchen-cpq/ui-kit": ["packages/ui-kit/src/index.ts"],
       "@kitchen-cpq/3d-engine": ["packages/3d-engine/src/index.ts"],
       "@kitchen-cpq/configurator-sdk": ["packages/configurator-sdk/src/index.ts"],
-      "@kitchen-cpq/geometry-kernel": ["packages/geometry-kernel/pkg"],
+      "@kitchen-cpq/geometry-kernel": ["packages/geometry-kernel/pkg/index.ts"],
       "@kitchen-cpq/proto-defs": ["packages/proto-defs/gen/ts/index.ts"],
       "@kitchen-cpq/*": [
         "libs/*/src/index.ts",
@@ -40,4 +40,3 @@
   },
   "exclude": ["node_modules", "dist", "tmp"]
 }
-

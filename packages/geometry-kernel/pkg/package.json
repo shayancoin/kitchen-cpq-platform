@@ -2,7 +2,6 @@
   "name": "@kitchen-cpq/geometry-kernel",
   "version": "0.0.1",
   "private": true,
-  "main": "./geometry_kernel.js",
-  "types": "./geometry_kernel.d.ts"
+  "main": "./index.js",
+  "types": "./index.d.ts"
 }
-
