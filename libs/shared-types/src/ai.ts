@@ -1,6 +1,6 @@
 import type { ISODateTime } from './primitives';
-import type { LayoutGoals, ParamDelta } from './configuration';
-import type { ProjectId } from './projects';
+import type { ConstraintSummary, LayoutGoals, ParamDelta, ParametricState } from './configuration';
+import type { ProjectId, Role } from './projects';
 
 export type CopilotRole = 'user' | 'assistant' | 'system' | 'tool';
 
@@ -28,3 +28,37 @@ export interface IntentParameters {
   proposedDeltas?: ParamDelta[];
 }
 
+export type AgentToolName =
+  | 'paramEngine.applyDelta'
+  | 'optimizer.solveLayout'
+  | 'cadService.generateCadMacro'
+  | 'pricingService.simulateChange';
+
+export type AgentToolStatus = 'pending' | 'running' | 'succeeded' | 'failed';
+
+export interface AgentToolCall {
+  id: string;
+  toolName: AgentToolName;
+  arguments: unknown;
+  status: AgentToolStatus;
+  result?: unknown;
+  error?: string;
+}
+
+export interface CopilotPlanResponse {
+  reply: string;
+  proposedDeltas?: ParamDelta[];
+  toolCalls: AgentToolCall[];
+  validatedState?: ParametricState;
+  constraintSummary?: ConstraintSummary;
+  warnings?: string[];
+}
+
+export interface CopilotChatRequest {
+  projectId: ProjectId;
+  message: string;
+  role: Role;
+  history?: CopilotMessage[];
+  goals?: LayoutGoals;
+  parametricState?: ParametricState;
+}

@@ -38,7 +38,10 @@ const expectedEndpoints = new Set([
   'ui.getConstraintBadge',
   'ui.getCpqSummaryBar',
   'workflow.StartOrderWorkflow.ACK',
-  'cadcam.GenerateArtifacts'
+  'cadcam.GenerateArtifacts',
+  'ai.design.interpretIntent',
+  'ai.design.chat',
+  'ai.manufacturing.analyst',
 ]);
 
 const manifestNames = new Set(manifest.endpoints.map((e) => e.name));
