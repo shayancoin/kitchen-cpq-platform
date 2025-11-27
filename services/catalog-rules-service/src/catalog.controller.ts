@@ -24,39 +24,27 @@ export class CatalogController {
       draftId?: CatalogVersionId;
     }
   ) {
-    async createDraft(
-      @Body()
-      body: {
-        tenantId: string;
-        label: string;
-        payload: Record<string, unknown>;
-        rules: Array<Record<string, unknown>>;
-        draftId: string;
-        createdBy: string;
-      }
-    ) {
-      try {
-        return await this.service.createDraft({
+    try {
+      return this.service.createDraft({
+        tenantId: body.tenantId,
+        label: body.label,
+        payload: body.payload,
+        rules: (body.rules ?? []).map((r, idx) => ({
+          id: `${idx}` as CatalogVersionId,
           tenantId: body.tenantId,
-          label: body.label,
-          payload: body.payload,
-          rules: (body.rules ?? []).map((r, idx) => ({
-            id: `${idx}` as CatalogVersionId,
-            tenantId: body.tenantId,
-            name: r?.name ?? `rule-${idx}`,
-            blob: r,
-            createdBy: body.createdBy
-          })),
-          createdBy: body.createdBy,
-          draftId: body.draftId
-        });
-      } catch (err) {
-        if (err instanceof ZodError) {
-          const message = err.errors.map((e) => e.message).join('; ');
-          throw new BadRequestException(`Invalid catalog payload: ${message}`);
-        }
-        throw err;
+          name: r?.name ?? `rule-${idx}`,
+          blob: r,
+          createdBy: body.createdBy
+        })),
+        createdBy: body.createdBy,
+        draftId: body.draftId
+      });
+    } catch (err) {
+      if (err instanceof ZodError) {
+        const message = err.errors.map((e) => e.message).join('; ');
+        throw new BadRequestException(`Invalid catalog payload: ${message}`);
       }
+      throw err;
     }
   }
 

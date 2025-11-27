@@ -33,7 +33,7 @@ const manufacturingActivities = proxyActivities<{
     catalog: CatalogSnapshotRef;
     bomId?: string;
     cncProgramId?: string;
-  }): Promise<{ jobId: string }>;
+  }): Promise<{ id: string }>;
 }>({
   startToCloseTimeout: '10s',
   scheduleToCloseTimeout: '30s'
@@ -78,5 +78,5 @@ export async function KitchenOrderWorkflow(
     cncProgramId: cadOutputs.cncProgramId
   });
 
-  return { quoteId: input.quoteId, jobId: job?.jobId ?? undefined };
+  return { quoteId: input.quoteId, jobId: job?.id ?? undefined };
 }
