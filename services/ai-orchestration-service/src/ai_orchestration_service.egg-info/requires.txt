@@ -1,5 +1,5 @@
-fastapi<0.116.0,>=0.115.3
-starlette<0.48.0,>=0.47.2
+fastapi<0.123.0,>=0.115.3
+starlette<0.51.0,>=0.49.1
 uvicorn[standard]<0.33.0,>=0.32.0
 pydantic<3.0.0,>=2.10.0
 pydantic-settings<3.0.0,>=2.6.0
