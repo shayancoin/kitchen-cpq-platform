@@ -10,6 +10,9 @@
     { "name": "ui.getConstraintBadge", "budgetMs": 40 },
     { "name": "ui.getCpqSummaryBar", "budgetMs": 60 },
     { "name": "workflow.StartOrderWorkflow.ACK", "budgetMs": 150 },
-    { "name": "cadcam.GenerateArtifacts", "budgetMs": 30000 }
+    { "name": "cadcam.GenerateArtifacts", "budgetMs": 30000 },
+    { "name": "ai.design.interpretIntent", "budgetMs": 800 },
+    { "name": "ai.design.chat", "budgetMs": 3000 },
+    { "name": "ai.manufacturing.analyst", "budgetMs": 1500 }
   ]
 }

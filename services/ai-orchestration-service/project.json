@@ -7,25 +7,25 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo \"build ai-orchestration-service (stub)\""
+        "command": "echo \"python service - no build step\""
       }
     },
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo \"lint ai-orchestration-service (stub)\""
+        "command": "cd services/ai-orchestration-service && black --check src && flake8 src"
       }
     },
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo \"test ai-orchestration-service (stub)\""
+        "command": "cd services/ai-orchestration-service && pytest -q"
       }
     },
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo \"serve ai-orchestration-service (stub)\""
+        "command": "cd services/ai-orchestration-service && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-3017}"
       }
     }
   },

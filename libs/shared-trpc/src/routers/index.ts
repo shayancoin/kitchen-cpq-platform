@@ -30,6 +30,11 @@ import {
   parseCabinetField,
   type MutableCabinetKey
 } from '@kitchen-cpq/shared-validation';
+import {
+  AgentToolCallSchema,
+  CopilotChatRequestSchema,
+  CopilotPlanResponseSchema
+} from '@kitchen-cpq/shared-validation';
 
 type BaseEntities = {
   tenant: Tenant;
@@ -38,6 +43,7 @@ type BaseEntities = {
 };
 
 const nowIso = (): string => new Date().toISOString();
+const AI_BASE = process.env.AI_AGENT_URL ?? 'http://localhost:3017';
 
 const resolveBaseEntities = (ctx: TrpcContext): BaseEntities => {
   const tenantId = (ctx.tenantId ?? ('tenant-demo' as TenantId)) as TenantId;
@@ -477,6 +483,39 @@ const reportingRouter = router({
   })
 });
 
+const aiRouter = router({
+  designChat: protectedProcedure
+    .input(CopilotChatRequestSchema)
+    .mutation(async ({ input, ctx }) => {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const token = ctx.session?.jwt;
+      if (token) headers.authorization = `Bearer ${token}`;
+
+      const res = await fetch(`${AI_BASE}/design/chat`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(input)
+      });
+
+      if (!res.ok) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: `AI request failed (${res.status})` });
+      }
+
+      const data = await res.json();
+      const parsed = CopilotPlanResponseSchema.safeParse(data);
+      if (!parsed.success) {
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `Invalid AI response: ${parsed.error.message}` });
+      }
+
+      const toolCallsParsed = AgentToolCallSchema.array().safeParse(parsed.data.toolCalls ?? []);
+      if (!toolCallsParsed.success) {
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `Invalid toolCalls: ${toolCallsParsed.error.message}` });
+      }
+
+      return { ...parsed.data, toolCalls: toolCallsParsed.data };
+    })
+});
+
 export const appRouter = router({
   auth: authRouter,
   tenancy: tenancyRouter,
@@ -485,7 +524,8 @@ export const appRouter = router({
   catalogAdmin: catalogAdminRouter,
   copilot: copilotRouter,
   ui: uiRouter,
-  reporting: reportingRouter
+  reporting: reportingRouter,
+  ai: aiRouter
 });
 
 export type AppRouter = typeof appRouter;
@@ -497,5 +537,6 @@ export {
   catalogAdminRouter,
   copilotRouter,
   uiRouter,
-  reportingRouter
+  reportingRouter,
+  aiRouter
 };
