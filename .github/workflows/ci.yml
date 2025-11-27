@@ -28,9 +28,26 @@ jobs:
       - name: Build
         run: pnpm build
 
-  param-kernel-rollout:
+  temporal-replay-tests:
     runs-on: ubuntu-latest
     needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Temporal workflow replay tests
+        run: pnpm exec nx run workflow-orchestration-service:test -- --testPathPattern=replay
+
+  param-kernel-rollout:
+    runs-on: ubuntu-latest
+    needs: [build, temporal-replay-tests]
     if: github.event_name != 'pull_request'
     env:
       IMAGE_NAME: kitchen-cpq/param-kernel-service

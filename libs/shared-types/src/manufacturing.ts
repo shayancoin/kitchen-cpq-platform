@@ -54,9 +54,31 @@ export interface CutList {
 
 export interface CncProgram {
   id: ULID;
+  tenantId: TenantId;
   projectId: ProjectId;
   machineId: string;
   gcodeUri: string;
   nestingPreviewUri?: string;
   generatedAt: ISODateTime;
+}
+
+export type ManufacturingJobStatus =
+  | 'pending'
+  | 'scheduled'
+  | 'in_progress'
+  | 'completed'
+  | 'failed';
+
+export interface ManufacturingJob {
+  id: ULID;
+  tenantId: TenantId;
+  projectId: ProjectId;
+  quoteId: QuoteId;
+  catalogVersion: CatalogSnapshotRef;
+  status: ManufacturingJobStatus;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+  bomId?: ULID;
+  cncProgramId?: ULID;
+  notes?: string;
 }

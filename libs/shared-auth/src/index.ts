@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import type { Role } from '@kitchen-cpq/shared-types';
 
 export type AuthClaims = {
@@ -21,10 +21,14 @@ export function verifyAuthToken(token: string, options: VerifyOptions = {}): Aut
     throw new Error('JWT secret is not configured');
   }
 
-  const decoded = jwt.verify(token, secret, {
-    audience: options.audience,
-    issuer: options.issuer
-  });
+  const decoded = jwt.verify(
+    token,
+    secret,
+    {
+      audience: options.audience as jwt.VerifyOptions['audience'],
+      issuer: options.issuer as jwt.VerifyOptions['issuer']
+    } satisfies jwt.VerifyOptions
+  );
 
   if (typeof decoded === 'string') {
     throw new Error('Invalid token payload');

@@ -19,10 +19,9 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo \"test domain-catalog (stub)\""
+        "command": "vitest run libs/domain-catalog/src --config libs/domain-catalog/vitest.config.ts"
       }
     }
   },
   "tags": ["type:lib", "scope:domain"]
 }
-

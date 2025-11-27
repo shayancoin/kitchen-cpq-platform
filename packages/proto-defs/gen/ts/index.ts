@@ -4,6 +4,7 @@ export const protoRoot = "/Users/shayanbozorgmanesh/Developer/kitchen-cpq-platfo
 export const protoFiles = [
   "ai.proto",
   "cad_cam.proto",
+  "catalog.proto",
   "cpq.proto",
   "identity.proto",
   "optimization.proto",

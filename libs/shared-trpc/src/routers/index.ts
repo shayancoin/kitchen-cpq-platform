@@ -7,9 +7,11 @@ import type {
   ConstraintBadgePayload,
   ConstraintSummary,
   CopilotMessage,
+  ISODateTime,
   LayoutGoals,
   LayoutVariant,
   LayoutVariantId,
+  ManufacturingJob,
   ParamDelta,
   ParametricState,
   ProjectId,
@@ -442,6 +444,39 @@ const uiRouter = router({
     })
 });
 
+const reportingRouter = router({
+  orderTimeline: protectedProcedure
+    .input(z.object({ projectId: z.string().min(1, 'projectId is required') }))
+    .query(({ input }): { projectId: ProjectId; timeline: { label: string; at: ISODateTime }[] } => {
+      const now = Date.now();
+      return {
+        projectId: input.projectId as ProjectId,
+        timeline: [
+          { label: 'Quote confirmed', at: new Date(now - 1000 * 60).toISOString() as ISODateTime },
+          { label: 'CAD/CAM started', at: new Date(now - 1000 * 30).toISOString() as ISODateTime },
+          { label: 'Manufacturing scheduled', at: new Date(now - 1000 * 10).toISOString() as ISODateTime }
+        ]
+      };
+    }),
+  getManufacturingJobs: protectedProcedure.query((): { jobs: ManufacturingJob[] } => {
+    const now = Date.now();
+    return {
+      jobs: [
+        {
+          id: 'job-stub' as ULID,
+          tenantId: 'tenant-demo' as TenantId,
+          projectId: 'proj-demo' as ProjectId,
+          quoteId: 'quote-demo' as QuoteId,
+          catalogVersion: { id: 'catalog-001' as CatalogVersionId, hash: 'hash-001' },
+          status: 'scheduled',
+          createdAt: new Date(now - 1000 * 60).toISOString() as ISODateTime,
+          updatedAt: new Date(now - 1000 * 5).toISOString() as ISODateTime
+        }
+      ]
+    };
+  })
+});
+
 export const appRouter = router({
   auth: authRouter,
   tenancy: tenancyRouter,
@@ -449,7 +484,8 @@ export const appRouter = router({
   cpq: cpqRouter,
   catalogAdmin: catalogAdminRouter,
   copilot: copilotRouter,
-  ui: uiRouter
+  ui: uiRouter,
+  reporting: reportingRouter
 });
 
 export type AppRouter = typeof appRouter;
@@ -460,5 +496,6 @@ export {
   cpqRouter,
   catalogAdminRouter,
   copilotRouter,
-  uiRouter
+  uiRouter,
+  reportingRouter
 };
