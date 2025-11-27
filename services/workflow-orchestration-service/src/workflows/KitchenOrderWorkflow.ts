@@ -47,8 +47,11 @@ export interface KitchenOrderWorkflowInput {
 }
 
 /**
- * Lightweight stub of the KitchenOrderWorkflow.
- * Temporal clients can start this workflow to orchestrate CPQ -> CAD/CAM -> Manufacturing.
+ * Orchestrates CPQ → CAD/CAM → Manufacturing activities to process a kitchen order.
+ *
+ * @param input - Workflow input containing `projectId` and `tenantId`. Must include `quoteId` and `catalog` for orchestration to proceed.
+ * @throws Error when `input.quoteId` or `input.catalog` is missing.
+ * @returns An object with `quoteId` (echoed from input) and `jobId` set to the created manufacturing job id, or `undefined` if no job id was produced.
  */
 export async function KitchenOrderWorkflow(
   input: KitchenOrderWorkflowInput

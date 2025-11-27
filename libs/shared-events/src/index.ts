@@ -208,6 +208,14 @@ export const eventSchemas: Record<EventName, EventSchema> = {
   }
 };
 
+/**
+ * Create a standardized event envelope for a domain event payload.
+ *
+ * @param payload - The domain event payload to wrap
+ * @param idGenerator - Function that produces a ULID to use as the envelope `id`
+ * @param timestamp - Function that returns an ISO 8601 timestamp for `producedAt`; defaults to current time
+ * @returns An EventEnvelope containing the provided payload, generated `id`, `name`, `version`, `producedAt`, and `headers` (`schema-version` and `event-name`)
+ */
 export function buildEnvelope<TPayload extends DomainEventPayload>(
   payload: TPayload,
   idGenerator: () => ULID,
@@ -226,6 +234,11 @@ export function buildEnvelope<TPayload extends DomainEventPayload>(
   };
 }
 
+/**
+ * Registers an EventSchema in the central eventSchemas registry.
+ *
+ * @param schema - The EventSchema to register; if a schema with the same `name` already exists it will be replaced
+ */
 export function registerEventSchema(schema: EventSchema) {
   eventSchemas[schema.name] = schema;
 }

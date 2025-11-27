@@ -9,6 +9,18 @@ import type {
 import { randomUUID } from 'crypto';
 import { logger } from '../instrumentation';
 
+/**
+ * Create a ManufacturingJob object from the provided identifiers and catalog snapshot.
+ *
+ * @param input - Object containing the identifiers and references used to build the job:
+ *   - `projectId`: project identifier
+ *   - `quoteId`: quote identifier
+ *   - `tenantId`: tenant identifier
+ *   - `catalog`: catalog snapshot reference used for `catalogVersion`
+ *   - `bomId` (optional): bill-of-materials identifier to associate with the job
+ *   - `cncProgramId` (optional): CNC program identifier to associate with the job
+ * @returns The newly constructed `ManufacturingJob` with a generated `id`, `status` set to `"scheduled"`, and `createdAt`/`updatedAt` timestamps.
+ */
 export async function createManufacturingJobActivity(input: {
   projectId: ProjectId;
   quoteId: QuoteId;

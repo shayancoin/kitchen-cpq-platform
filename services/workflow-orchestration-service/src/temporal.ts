@@ -63,6 +63,12 @@ export class Worker {
   }
 }
 
+/**
+ * Creates a proxy of activity functions that provide no-op async implementations.
+ *
+ * @param _options - Configuration for the activity proxy; ignored by this stub implementation.
+ * @returns An object whose properties are async functions that resolve to `undefined` when invoked.
+ */
 export function proxyActivities<T extends Record<string, unknown>>(
   _options: Record<string, unknown>
 ): T {

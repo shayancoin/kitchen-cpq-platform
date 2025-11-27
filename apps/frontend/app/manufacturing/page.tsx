@@ -7,6 +7,13 @@ import type { ManufacturingJob } from '@kitchen-cpq/shared-types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
+/**
+ * Renders the Manufacturing page showing a polled factory job queue and its statuses.
+ *
+ * Displays a header and a list of manufacturing jobs fetched from the reporting API. Shows a loading message while fetching, an error message on failure, and for each job displays its id, last-updated time, and status badge.
+ *
+ * @returns The component's rendered JSX element containing the manufacturing queue UI.
+ */
 export default function ManufacturingPage() {
   const trpc = useMemo(() => createTrpcClient({ baseUrl: API_BASE }), []);
 

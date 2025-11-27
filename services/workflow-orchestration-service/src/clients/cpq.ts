@@ -42,6 +42,12 @@ const DEFAULT_CATALOG_SNAPSHOT: CatalogSnapshotRef = {
   hash: process.env.CATALOG_SNAPSHOT_HASH ?? 'hash-001'
 };
 
+/**
+ * Delay execution for a given number of milliseconds.
+ *
+ * @param ms - The delay duration in milliseconds
+ * @returns A promise that resolves when the delay has elapsed
+ */
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

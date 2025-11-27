@@ -127,6 +127,14 @@ class RedisIdempotencyStore implements IdempotencyStore {
   }
 }
 
+/**
+ * Selects and constructs the configured idempotency store implementation.
+ *
+ * Chooses a Redis-backed store when IDEMPOTENCY_REDIS_URL is set, a dev-only file-backed store when IDEMPOTENCY_DEV_ONLY is true, and otherwise fails.
+ *
+ * @returns The instantiated IdempotencyStore implementation.
+ * @throws Error if neither IDEMPOTENCY_REDIS_URL nor IDEMPOTENCY_DEV_ONLY is configured.
+ */
 async function createIdempotencyStore(): Promise<IdempotencyStore> {
   if (IDEMPOTENCY_REDIS_URL) {
     logger.info('idempotency.store.redis', { ttlMs: IDEMPOTENCY_TTL_MS });
@@ -150,8 +158,8 @@ const idempotencyStorePromise = createIdempotencyStore();
 
 /**
  * Recomputes quote pricing and constraints for a project.
- * P95 budget: 30s (startToCloseTimeout: 30s, scheduleToCloseTimeout: 120s)
- * Idempotency: keyed by workflowId + activityName + payload hash; replace cache with durable store.
+ *
+ * Operation is idempotent: a deduplication key is derived from the workflow id, activity name, and a SHA-256 hash of the input payload so repeated executions for the same payload are skipped.
  */
 export async function recomputeQuoteActivity(input: {
   projectId: ProjectId;

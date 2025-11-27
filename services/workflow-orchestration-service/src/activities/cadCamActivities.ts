@@ -2,6 +2,12 @@ import type { CatalogSnapshotRef, ProjectId, QuoteId, TenantId, ULID } from '@ki
 import { randomUUID } from 'crypto';
 import { logger } from '../instrumentation';
 
+/**
+ * Generate ULID identifiers for CAD/CAM outputs for a given project, quote, tenant, and catalog snapshot.
+ *
+ * @param input - Context identifying the project and quote and the catalog snapshot used when producing the outputs
+ * @returns An object containing `bomId` (ULID for the bill of materials) and `cncProgramId` (ULID for the CNC program)
+ */
 export async function generateCadCamOutputsActivity(input: {
   projectId: ProjectId;
   quoteId: QuoteId;
