@@ -47,11 +47,11 @@ export interface KitchenOrderWorkflowInput {
 }
 
 /**
- * Orchestrates CPQ, CAD/CAM, and manufacturing activities to produce a manufacturing job for a quote.
+ * Orchestrates CPQ → CAD/CAM → Manufacturing activities to process a kitchen order.
  *
- * @param input - Workflow input; must include `quoteId` and `catalog` in addition to `projectId` and `tenantId`
- * @returns An object containing the input `quoteId` and the created manufacturing `jobId` (or `undefined` if no job was produced)
- * @throws Error if `input.quoteId` or `input.catalog` is missing
+ * @param input - Workflow input containing `projectId` and `tenantId`. Must include `quoteId` and `catalog` for orchestration to proceed.
+ * @throws Error when `input.quoteId` or `input.catalog` is missing.
+ * @returns An object with `quoteId` (echoed from input) and `jobId` set to the created manufacturing job id, or `undefined` if no job id was produced.
  */
 export async function KitchenOrderWorkflow(
   input: KitchenOrderWorkflowInput
@@ -81,7 +81,5 @@ export async function KitchenOrderWorkflow(
     cncProgramId: cadOutputs.cncProgramId
   });
 
-  return { quoteId: input.quoteId, jobId: job?.jobId ?? undefined };
-}
   return { quoteId: input.quoteId, jobId: job?.id ?? undefined };
 }

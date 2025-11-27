@@ -43,10 +43,10 @@ const DEFAULT_CATALOG_SNAPSHOT: CatalogSnapshotRef = {
 };
 
 /**
- * Pause execution for a specified number of milliseconds.
+ * Delay execution for a given number of milliseconds.
  *
- * @param ms - Delay duration in milliseconds
- * @returns `undefined` after the specified delay
+ * @param ms - The delay duration in milliseconds
+ * @returns A promise that resolves when the delay has elapsed
  */
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

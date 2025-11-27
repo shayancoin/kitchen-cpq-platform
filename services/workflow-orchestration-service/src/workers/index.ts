@@ -87,13 +87,12 @@ function instrumentActivity<TArgs extends unknown[], TResult>(
 }
 
 /**
- * Starts an HTTP server that exposes health and Prometheus-compatible activity metrics.
+ * Starts an HTTP server that exposes a health endpoint and Prometheus-compatible metrics for instrumented activities.
  *
- * The server serves two endpoints:
- * - GET /health: returns JSON `{ status: "ok" }`.
- * - GET /metrics: returns Prometheus-formatted metrics for each instrumented activity, including throughput, error counts, duration histogram buckets (including `+Inf`), duration sum, and duration count (duration values are in milliseconds).
+ * The server responds to GET /health with JSON { status: 'ok' } and to GET /metrics with Prometheus-formatted metrics
+ * derived from `activityMetrics` (throughput, errors, duration buckets, sum, and count) labeled by activity name.
  *
- * @param port - TCP port to listen on (defaults to 9464)
+ * @param port - TCP port to listen on (default: 9464)
  */
 function startMetricsServer(port = 9464) {
   const server = http.createServer((req, res) => {
@@ -140,9 +139,9 @@ function startMetricsServer(port = 9464) {
 }
 
 /**
- * Starts a bridge that listens to the `orders.lifecycle` Kafka topic and initiates a KitchenOrderWorkflow for valid `quote.confirmed` events.
+ * Registers a Kafka subscription for `orders.lifecycle` and starts a KitchenOrderWorkflow when a valid `quote.confirmed` event is received.
  *
- * Subscribes to the topic, validates incoming payloads for the expected `quote.confirmed` shape, attaches OpenTelemetry attributes and spans, logs processing events, and starts a Temporal workflow using the quote identifiers and catalog. If workflow start fails the error is recorded on the span and rethrown from the subscription handler.
+ * Validates incoming envelopes for the `quote.confirmed` payload shape, sets tracing attributes on the handling span, logs receipt, and starts a Temporal KitchenOrderWorkflow using the event's projectId, tenantId, quoteId, and catalog. Invalid payloads are logged and marked as span errors; workflow start failures are recorded on the span and rethrown.
  */
 function wireKafkaBridge() {
   const client = new Client();
@@ -220,9 +219,11 @@ function wireKafkaBridge() {
 }
 
 /**
- * Establishes a Temporal connection, creates and starts a worker for the kitchen-order task queue, and initializes the Kafka bridge and metrics server.
+ * Starts and runs the Temporal worker, wires the Kafka bridge, and exposes the metrics HTTP endpoint while tracing the worker lifecycle.
  *
- * Uses the TEMPORAL_ADDRESS and TEMPORAL_NAMESPACE environment variables (with defaults 'localhost:7233' and 'default') to configure the Temporal connection and task routing, and METRICS_PORT to configure the metrics HTTP server.
+ * Connects to the Temporal server, registers workflows and instrumented activities on the `kitchen-order-queue`, starts the Kafka-to-workflow bridge, and starts the metrics server. Runs the worker inside a tracing span so any errors are recorded to tracing before being propagated.
+ *
+ * @throws Propagates any error thrown by the worker after recording it to the active trace span.
  */
 async function runWorker() {
   const connection = await NativeConnection.connect({

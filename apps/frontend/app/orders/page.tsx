@@ -8,11 +8,9 @@ type OrderEvent = { label: string; at: string };
 /**
  * Render the Orders page showing a project-specific order workflow timeline.
  *
- * The component fetches and displays the timeline for the current project ID (editable via the Project ID input)
- * and updates the timeline automatically by polling every 4 seconds. While data is loading it shows a loading message;
- * once loaded it renders the timeline events with their timestamps.
+ * Fetches the timeline for the current Project ID (editable via an input) and refreshes the data every 4 seconds; shows a loading state while awaiting data and displays events with timestamps when available.
  *
- * @returns The Orders page as a JSX element
+ * @returns A React element that displays the project ID input and the order workflow timeline.
  */
 export default function OrdersPage() {
   const [projectId, setProjectId] = useState('demo-project');
