@@ -28,5 +28,10 @@ class Settings(BaseSettings):
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
+  """
+  Provide the application's configuration Settings instance.
+  
+  Returns:
+      Settings: Singleton Settings populated from defaults and environment variables (prefixed with "AI_", case-insensitive).
+  """
   return Settings()
-

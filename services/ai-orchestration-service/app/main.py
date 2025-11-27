@@ -15,6 +15,11 @@ from .tools import ToolRegistry
 
 
 def setup_logging() -> None:
+  """
+  Configure root logging to emit JSON-formatted logs at INFO level and enable structlog filtering.
+  
+  Sets the root logger level to INFO, replaces its handlers with a StreamHandler that formats records as JSON (timestamp, level, logger name, and message), and configures structlog to filter bound loggers at INFO.
+  """
   logger = logging.getLogger()
   logger.setLevel(logging.INFO)
   handler = logging.StreamHandler()
@@ -25,6 +30,15 @@ def setup_logging() -> None:
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
+  """
+  Create and configure the FastAPI application for the AI Orchestration Service.
+  
+  Parameters:
+      settings (Settings | None): Optional settings to configure the application. If omitted, default settings are loaded.
+  
+  Returns:
+      FastAPI: Configured application instance with startup/shutdown lifecycle handlers, routers registered, and the HTTP client, audit logger, tool registry, and planner stored on `app.state`.
+  """
   settings = settings or get_settings()
   setup_logging()
   app = FastAPI(
@@ -35,6 +49,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
   @app.on_event("startup")
   async def startup() -> None:
+    """
+    Initialize application resources and attach them to app.state.
+    
+    Creates an HTTPX asynchronous client configured with the application's HTTP timeout, an AuditLogger using the configured audit log path, a ToolRegistry wired with settings, the HTTP client, and the audit logger, and a PlannerOrchestrator backed by that tool registry. Stores these instances on app.state as `http_client`, `audit_logger`, `tool_registry`, and `planner` for use by the application lifecycle.
+    """
     client = httpx.AsyncClient(timeout=settings.http_timeout_seconds)
     audit_logger = AuditLogger(settings.audit_log_path)
     tool_registry = ToolRegistry(settings=settings, client=client, audit=audit_logger)
@@ -46,6 +65,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
   @app.on_event("shutdown")
   async def shutdown() -> None:
+    """
+    Close the application's shared HTTP client stored in app.state.
+    
+    Retrieves the AsyncClient from app.state.http_client and closes it to release network resources.
+    """
     client: httpx.AsyncClient = app.state.http_client
     await client.aclose()
 
@@ -55,4 +79,3 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
 
 app = create_app()
-
