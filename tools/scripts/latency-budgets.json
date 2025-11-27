@@ -1,0 +1,15 @@
+{
+  "endpoints": [
+    { "name": "auth.getSession", "budgetMs": 25 },
+    { "name": "tenancy.getCurrentTenant", "budgetMs": 20 },
+    { "name": "configurator.mutateParameters", "budgetMs": 150 },
+    { "name": "configurator.requestLayoutVariants", "budgetMs": 200 },
+    { "name": "configurator.validateDesign", "budgetMs": 50 },
+    { "name": "cpq.priceDelta", "budgetMs": 30 },
+    { "name": "cpq.getQuoteForProject", "budgetMs": 80 },
+    { "name": "ui.getConstraintBadge", "budgetMs": 40 },
+    { "name": "ui.getCpqSummaryBar", "budgetMs": 60 },
+    { "name": "workflow.StartOrderWorkflow.ACK", "budgetMs": 150 },
+    { "name": "cadcam.GenerateArtifacts", "budgetMs": 30000 }
+  ]
+}

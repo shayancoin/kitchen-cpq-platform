@@ -1,0 +1,11 @@
+{
+  "name": "@kitchen-cpq/shared-auth",
+  "version": "0.0.1",
+  "private": true,
+  "main": "src/index.ts",
+  "type": "module",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "@kitchen-cpq/shared-types": "workspace:*"
+  }
+}

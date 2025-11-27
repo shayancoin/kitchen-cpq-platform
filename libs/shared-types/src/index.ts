@@ -8,6 +8,6 @@ export * from './configuration';
 export * from './catalog';
 export * from './cpq';
 export * from './manufacturing';
+export * from './workflow';
 export * from './ai';
 export * from './ui';
-export * from './parametric-kernel';

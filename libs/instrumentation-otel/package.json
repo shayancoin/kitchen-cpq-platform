@@ -1,0 +1,11 @@
+{
+  "name": "@kitchen-cpq/instrumentation-otel",
+  "version": "0.0.1",
+  "private": true,
+  "main": "src/index.ts",
+  "type": "module",
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-node": "^0.52.1"
+  }
+}

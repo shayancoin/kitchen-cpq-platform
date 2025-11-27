@@ -22,6 +22,12 @@
         "command": "pnpm exec vitest run --config apps/frontend/vitest.config.ts"
       }
     },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec playwright test --config apps/frontend/playwright.config.ts"
+      }
+    },
     "serve": {
       "executor": "@nx/next:dev-server",
       "options": {

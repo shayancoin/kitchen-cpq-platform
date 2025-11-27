@@ -2,10 +2,6 @@ syntax = "proto3";
 
 package parametric.v1;
 
-// NOTE: ParametricStateJson is deprecated; full parametric state should be
-// persisted externally (e.g., S3/Redis) keyed by state_id. The RPC surface now
-// returns a compact summary instead of large opaque JSON payloads.
-
 message ParamDelta {
   string path = 1;
   string value_json = 2;
@@ -29,18 +25,12 @@ message ConstraintSummary {
   repeated ConstraintViolation violations = 2;
 }
 
-// Compact summary of persisted parametric state.
-message ParametricStateSummary {
-  // Immutable ID of the persisted state blob (e.g., S3 key, Redis key).
-  string state_id = 1;
-  // Schema/catalog version of the state for migration/bookkeeping.
-  string version = 2;
-  // Lightweight metadata extracted from the state (e.g., projectId, catalogVersionId, hash).
-  map<string, string> metadata = 3;
+message ParametricStateJson {
+  string json = 1;
 }
 
 message ApplyDeltaResponse {
-  ParametricStateSummary state = 1;
+  ParametricStateJson state = 1;
   ConstraintSummary constraints = 2;
 }
 
