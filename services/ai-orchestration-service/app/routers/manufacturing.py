@@ -9,6 +9,15 @@ router = APIRouter(prefix="/manufacturing", tags=["manufacturing"])
 
 
 def get_audit(request: Request) -> AuditLogger:
+  """
+  Retrieve the application's AuditLogger instance from the incoming request's application state.
+  
+  Parameters:
+      request (Request): The incoming FastAPI request used to access app state.
+  
+  Returns:
+      AuditLogger: The AuditLogger stored on request.app.state.audit_logger.
+  """
   return request.app.state.audit_logger
 
 
@@ -17,7 +26,17 @@ async def manufacturing_analyst(
   payload: ManufacturingAnalystRequest,
   audit: AuditLogger = Depends(get_audit),
 ) -> ManufacturingAnalystResponse:
-  """Lightweight deterministic analyst that only proposes workflow-safe actions."""
+  """
+  Produce deterministic manufacturing recommendations and schedule CAD/CAM tool calls.
+  
+  Emits an audit event "ai.manufacturing.analyst" with the payload fields `projectId`, `tenantId`, `message`, `workflowId`, and a serialized `toolCalls` list.
+  
+  Parameters:
+      payload (ManufacturingAnalystRequest): Request containing projectId, tenantId, message, and workflowId used for recommendations and audit logging.
+  
+  Returns:
+      ManufacturingAnalystResponse: Response containing a human-readable `reply`, a list of `toolCalls` (each a `ToolCall` with initial status "pending"), and a list of string `recommendations`.
+  """
   recommendations = [
     "Validate current configuration against catalog snapshot before releasing manufacturing job.",
     "Run nesting and panel utilization check via CAD/CAM service.",

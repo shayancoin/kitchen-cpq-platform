@@ -14,11 +14,26 @@ from .models import ConstraintSummary, ParamDelta, ParametricState, ToolCall, To
 
 class ToolRegistry:
   def __init__(self, settings: Settings, client: httpx.AsyncClient, audit: AuditLogger):
+    """
+    Initialize the ToolRegistry with runtime configuration, an HTTP client, and an audit logger.
+    
+    Stores references to settings, an HTTP client used for external tool requests, and an AuditLogger used to record tool interaction events.
+    """
     self.settings = settings
     self.client = client
     self.audit = audit
 
   async def call_param_engine(self, project_id: str, deltas: List[ParamDelta]) -> ToolCall:
+    """
+    Send parameter deltas to the param engine service and return a ToolCall that records the request and outcome.
+    
+    Parameters:
+        project_id (str): Identifier of the project whose parameters are being modified.
+        deltas (List[ParamDelta]): List of parameter deltas to apply.
+    
+    Returns:
+        ToolCall: A ToolCall instance initialized with the request arguments and later updated with status (`"succeeded"` or `"failed"`), `result` on success, or `error` on failure.
+    """
     validate_param_deltas([delta.model_dump() for delta in deltas])
     payload = {
       "project_id": project_id,
@@ -48,6 +63,16 @@ class ToolRegistry:
     return tool_call
 
   async def call_optimizer(self, project_id: str, goals: Dict[str, Any]) -> ToolCall:
+    """
+    Request layout suggestions from the optimizer service and return a ToolCall that records the request and its outcome.
+    
+    Parameters:
+        project_id (str): Identifier of the project for which layouts are being requested.
+        goals (Dict[str, Any]): Optimization goals payload passed to the optimizer (arbitrary goal keys and values expected by the service).
+    
+    Returns:
+        ToolCall: A ToolCall populated with the request arguments. On success the ToolCall.status is `"succeeded"` and ToolCall.result contains the optimizer response; on failure the ToolCall.status is `"failed"` and ToolCall.error contains the error message.
+    """
     payload = {"project_id": project_id, "goals": goals, "max_layouts": 3}
     tool_call = ToolCall(
       id="optimizer",
@@ -69,6 +94,15 @@ class ToolRegistry:
     return tool_call
 
   async def call_cad_macro(self, macro: str) -> ToolCall:
+    """
+    Call the CAD service to generate a CAD macro and return a ToolCall recording the interaction.
+    
+    Parameters:
+        macro (str): CAD macro content or identifier; validated before sending.
+    
+    Returns:
+        ToolCall: A ToolCall with id "cad-macro". If the request succeeds, `status` is "succeeded" and `result` contains the service response; if it fails, `status` is "failed" and `error` contains the error string.
+    """
     validate_cad_macro(macro)
     payload = {"macro": macro}
     tool_call = ToolCall(
@@ -91,6 +125,17 @@ class ToolRegistry:
     return tool_call
 
   async def call_pricing_sim(self, project_id: str, deltas: List[ParamDelta]) -> ToolCall:
+    """
+    Send parameter deltas to the pricing service to simulate their effect and return a ToolCall describing the request and outcome.
+    
+    Parameters:
+        project_id (str): Identifier of the project for which the pricing simulation is requested.
+        deltas (List[ParamDelta]): List of parameter changes to simulate.
+    
+    Returns:
+        ToolCall: A ToolCall representing the pricing simulation request; on success its `status` is "succeeded" and `result` contains the service response, on failure its `status` is "failed" and `error` contains the error string. 
+    
+    """
     validate_param_deltas([d.model_dump() for d in deltas])
     payload = {"project_id": project_id, "deltas": [d.model_dump() for d in deltas]}
     tool_call = ToolCall(
@@ -120,6 +165,18 @@ class ToolRegistry:
     goals: Optional[Dict[str, Any]] = None,
     macro: Optional[str] = None,
   ) -> list[ToolCall]:
+    """
+    Orchestrates execution of selected tool calls (param engine, pricing, optimizer, CAD) and returns their results in execution order.
+    
+    Parameters:
+        project_id (str): Identifier of the project the plan applies to.
+        deltas (List[ParamDelta]): Parameter changes to apply; when provided, runs the param engine then pricing simulation.
+        goals (Optional[Dict[str, Any]]): Optimization goals; when provided, runs the optimizer.
+        macro (Optional[str]): CAD macro to generate; when provided, the macro is validated and the CAD macro tool is invoked.
+    
+    Returns:
+        list[ToolCall]: ToolCall objects for each invoked tool in the order they were executed.
+    """
     tool_calls: list[ToolCall] = []
     if deltas:
       tool_calls.append(await self.call_param_engine(project_id, deltas))
@@ -132,6 +189,14 @@ class ToolRegistry:
     return tool_calls
 
   def extract_validated_state(self, call: ToolCall) -> Optional[ParametricState]:
+    """
+    Extracts and validates a ParametricState object from a ToolCall's result.
+    
+    If the ToolCall contains a "state" payload (either a dict or a JSON string), attempts to parse and validate it into a ParametricState. Returns None when no state is present or validation fails.
+    
+    Returns:
+        ParametricState or `None`: The validated ParametricState when extraction succeeds, `None` otherwise.
+    """
     if not call.result or "state" not in call.result:
       return None
     state_json = call.result.get("state", {}).get("json") if isinstance(call.result.get("state"), dict) else None
@@ -146,6 +211,15 @@ class ToolRegistry:
       return None
 
   def extract_constraints(self, call: ToolCall) -> Optional[ConstraintSummary]:
+    """
+    Extracts and validates a ConstraintSummary from a ToolCall result.
+    
+    Parameters:
+        call (ToolCall): ToolCall whose `result` may include a `"constraints"` key with the constraint payload to validate.
+    
+    Returns:
+        ConstraintSummary: The validated constraints if present and valid, `None` otherwise.
+    """
     if not call.result or "constraints" not in call.result:
       return None
     try:

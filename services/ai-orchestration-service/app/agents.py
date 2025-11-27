@@ -23,7 +23,17 @@ class AgentState(TypedDict):
 
 
 def heuristic_param_deltas(message: str) -> list[ParamDelta]:
-  """Simple heuristic mapper for demo/testing without an LLM."""
+  """
+  Extract simple parameter update suggestions from a user message using heuristics.
+  
+  Scans the provided message for informal hints about dimensions or positioning and returns suggested parameter deltas suitable for downstream planning.
+  
+  Parameters:
+      message (str): The user or system message to analyze for hints (e.g., width or move instructions).
+  
+  Returns:
+      list[ParamDelta]: Suggested parameter updates (for example, `cabinets.primary.width` or `cabinets.primary.position`). Returns an empty list if no suggestions are found.
+  """
   deltas: list[ParamDelta] = []
   width_match = re.search(r"(?:width|wider)\s*(\d{2,4})", message, re.IGNORECASE)
   if width_match:
@@ -36,6 +46,11 @@ def heuristic_param_deltas(message: str) -> list[ParamDelta]:
 
 class PlannerOrchestrator:
   def __init__(self, tools: ToolRegistry):
+    """
+    Initialize the orchestrator with a tool registry and compile the planning/execution state graph.
+    
+    Builds a StateGraph for AgentState with two nodes—"plan" (bound to plan_intent) and "act" (bound to execute_tools)—and connects START -> "plan" -> "act" -> END, then compiles the graph and stores it on the instance.
+    """
     self.tools = tools
     builder = StateGraph(AgentState)
     builder.add_node("plan", self.plan_intent)
@@ -46,6 +61,19 @@ class PlannerOrchestrator:
     self.graph = builder.compile()
 
   async def plan_intent(self, state: AgentState) -> AgentState:
+    """
+    Builds or updates the agent intent by extracting heuristic parameter deltas from the latest user message.
+    
+    Parameters:
+        state (AgentState): Current agent state; the function reads the last entry of `state["messages"]` and merges any existing `state["intent"]`.
+    
+    Returns:
+        AgentState: A new state mapping containing an updated "intent" with:
+            - "message": the last message text
+            - "proposed_deltas": list of delta dictionaries produced by heuristic_param_deltas
+            - "goals": preserved from the previous intent (if any)
+            - "macro": preserved from the previous intent (if any)
+    """
     last_message = state["messages"][-1]
     text = last_message.get("content", "")
     deltas = heuristic_param_deltas(text)
@@ -60,6 +88,15 @@ class PlannerOrchestrator:
     return {"intent": intent}
 
   async def execute_tools(self, state: AgentState) -> AgentState:
+    """
+    Execute planned parameter deltas, goals, and macro through the registered tool registry and attach the resulting tool calls to the agent state.
+    
+    Parameters:
+        state (AgentState): Current agent state; expected to contain an `intent` mapping which may include `proposed_deltas`, `goals`, `macro`, and optionally `projectId`.
+    
+    Returns:
+        AgentState: The same state dictionary with its `"tool_calls"` key set to the list of ToolCall objects returned by the tool execution. If tool execution raises an exception, `"tool_calls"` will contain a single error ToolCall with id `"planner-error"` and status `"failed"`.
+    """
     intent = state.get("intent") or {}
     deltas_raw = intent.get("proposed_deltas") or []
     goals = intent.get("goals")
@@ -89,6 +126,21 @@ class PlannerOrchestrator:
     return state
 
   async def run(self, payload: IntentPayload, *, execute_tools: bool = True) -> PlannerResult:
+    """
+    Run planning for the given intent payload and optionally execute the resulting tool plan, then aggregate and return the planner result.
+    
+    Parameters:
+        payload (IntentPayload): The incoming intent data containing role, message, projectId, and optional goals.
+        execute_tools (bool): If True, execute the planning+execution graph; if False, run only the planning step.
+    
+    Returns:
+        PlannerResult: An object containing:
+            - reply: A human-facing reply summarizing the outcome.
+            - proposedDeltas: List of validated `ParamDelta` objects produced by planning.
+            - toolCalls: List of `ToolCall` records produced during execution (may be empty).
+            - validatedState: The last validated state extracted from tool calls, or `None` if none.
+            - constraintSummary: The last extracted constraint summary from tool calls, or `None` if none.
+    """
     messages = [{"role": payload.role, "content": payload.message}]
     initial_state: AgentState = {
       "messages": messages,
@@ -128,5 +180,14 @@ class PlannerOrchestrator:
     )
 
   async def run_chat(self, payload: ChatTurnRequest) -> PlannerResult:
+    """
+    Process a chat turn by converting the chat request into an intent payload and running the planner with tool execution.
+    
+    Parameters:
+        payload (ChatTurnRequest): The incoming chat turn to process.
+    
+    Returns:
+        PlannerResult: The planner result containing the reply, proposed deltas, tool calls, validated state, and constraint summary.
+    """
     base = await self.run(IntentPayload(**payload.model_dump()), execute_tools=True)
     return base

@@ -15,6 +15,15 @@ from app.tools import ToolRegistry
 
 
 def build_test_settings(tmp_path: Path) -> Settings:
+  """
+  Create a Settings instance configured for tests with mocked service URLs and an audit log path.
+  
+  Parameters:
+      tmp_path (Path): Temporary directory in which to place the test audit log file.
+  
+  Returns:
+      Settings: Configuration whose service endpoints point to example hostnames and whose `audit_log_path` is set to `<tmp_path>/audit.log`.
+  """
   return Settings(
     param_kernel_url="http://param.example/kernel",
     optimizer_url="http://opt.example/optimizer",
@@ -57,6 +66,11 @@ async def test_design_chat_calls_tools(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_guardrail_blocks_prohibited_macro(tmp_path: Path) -> None:
+  """
+  Verifies that invoking a prohibited CAD macro through the ToolRegistry is blocked with an HTTPException.
+  
+  Sets up a ToolRegistry using test settings, an AsyncClient, and an AuditLogger, then asserts that calling `call_cad_macro` with a disallowed macro string raises `HTTPException`.
+  """
   settings = build_test_settings(tmp_path)
 
   async with httpx.AsyncClient() as client:
