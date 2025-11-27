@@ -15,6 +15,11 @@ export interface SceneHandle {
   dispose?: () => void;
 }
 
+/**
+ * Loads the '@babylonjs/core' library at runtime and returns it when available.
+ *
+ * @returns The imported Babylon module when successful, `null` if the module cannot be loaded.
+ */
 async function loadBabylon(): Promise<BabylonModule | null> {
   try {
     // Dynamic import so tests without Babylon can still run.
@@ -26,6 +31,18 @@ async function loadBabylon(): Promise<BabylonModule | null> {
   }
 }
 
+/**
+ * Create and initialize a kitchen scene on the provided canvas using the given parametric state.
+ *
+ * Attempts to load Babylon.js and, if available, constructs a 3D scene (engine, camera, lights,
+ * floor, walls, shared cabinet base and material), populates it from `initialState`, and starts the render loop.
+ * If Babylon.js cannot be loaded, paints a simple 2D fallback on the canvas and returns a minimal handle.
+ *
+ * @param canvas - The canvas element to render the scene (or fallback) into.
+ * @param initialState - The initial parametric scene state used to build walls, cabinets, and other scene content.
+ * @returns The SceneHandle for the created scene. When Babylon.js is available the handle contains the engine, scene,
+ * cabinet material and base mesh, and a running render loop; otherwise it contains a minimal fallback handle (id, canvas, cabinets).
+ */
 export async function createKitchenScene(
   canvas: HTMLCanvasElement,
   initialState: ParametricState

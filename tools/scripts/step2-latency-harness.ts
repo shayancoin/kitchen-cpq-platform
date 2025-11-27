@@ -10,6 +10,12 @@ import { performance } from 'perf_hooks';
 const BASE = process.env.CFG_SESSION_URL ?? 'http://localhost:3013';
 const PROJECT_ID = process.env.PROJECT_ID ?? 'perf-demo';
 
+/**
+ * Sends a single mutation request to set `cabinets.cab-1.position` and measures the request latency.
+ *
+ * @param position - The numeric position to set for `cabinets.cab-1.position`
+ * @returns The elapsed time in milliseconds for the HTTP request
+ */
 async function mutateOnce(position: number): Promise<number> {
   const start = performance.now();
   const token = process.env.AUTH_TOKEN;
@@ -28,6 +34,12 @@ async function mutateOnce(position: number): Promise<number> {
   return performance.now() - start;
 }
 
+/**
+ * Computes the 95th percentile of a numeric sample set.
+ *
+ * @param samples - Array of numeric samples (for example, latency measurements) to compute the percentile from
+ * @returns The 95th percentile value from `samples`; `0` if `samples` is empty
+ */
 function p95(samples: number[]): number {
   const sorted = [...samples].sort((a, b) => a - b);
   const n = sorted.length;
@@ -40,6 +52,17 @@ function p95(samples: number[]): number {
   return sorted[lower] * (1 - weight) + sorted[upper] * weight;
 }
 
+/**
+ * Runs a short latency benchmark of eight parameter mutation requests and prints a JSON report of the results.
+ *
+ * The printed report is a JSON object with the following fields:
+ * - `name`: metric name (`configurator.mutateParameters`)
+ * - `samples`: array of measured durations in milliseconds for each mutation request
+ * - `p95`: 95th percentile of the `samples`
+ * - `timestamp`: ISO 8601 timestamp when the report was generated
+ *
+ * The function performs eight mutation requests with positions 0, 50, …, 350 and writes the report to stdout.
+ */
 async function run() {
   const samples: number[] = [];
   for (let i = 0; i < 8; i++) {

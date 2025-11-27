@@ -5,6 +5,14 @@ import type { Mesh, InstancedMesh } from '@babylonjs/core';
 const cabinetColor = { r: 0.8, g: 0.72, b: 0.65 };
 let babylonCache: typeof import('@babylonjs/core') | null = null;
 
+/**
+ * Update the scene to match the provided parametric state by creating, updating, or removing cabinet visuals.
+ *
+ * Updates or lazily initializes 3D cabinet meshes, their shared base mesh and material, and synchronizes instances with state.cabinets; if the 3D scene or required context is unavailable, renders a simple 2D fallback onto the provided canvas.
+ *
+ * @param handle - Scene handle that holds the Babylon scene, engine, canvas and optional cached cabinet meshes/materials
+ * @param state - Parametric state containing the list of cabinets to render and synchronize
+ */
 export async function updateSceneFromState(
   handle: SceneHandle,
   state: ParametricState

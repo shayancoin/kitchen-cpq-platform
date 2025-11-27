@@ -15,6 +15,11 @@ type WasmModule = {
 const stateStore = new Map<string, ParametricState>();
 let wasmModulePromise: Promise<WasmModule> | null = null;
 
+/**
+ * Load and cache the geometry WebAssembly module wrapper, falling back to an empty object when unavailable.
+ *
+ * @returns The loaded `WasmModule` wrapper, or an empty object if the module cannot be imported
+ */
 async function loadWasm(): Promise<WasmModule> {
   if (wasmModulePromise) return wasmModulePromise;
   // In CI/dev we often run without wasm-pack output. Fallback to an empty object so the pure
@@ -26,6 +31,16 @@ async function loadWasm(): Promise<WasmModule> {
 const cloneState = (state: ParametricState): ParametricState =>
   JSON.parse(JSON.stringify(state));
 
+/**
+ * Set a top-level property on a cabinet within the given state.
+ *
+ * If the cabinet with `cabinetId` is not found or `key` is `"parameters"`, the function does nothing.
+ *
+ * @param state - The parametric state containing cabinets
+ * @param cabinetId - The identifier of the cabinet to modify
+ * @param key - The cabinet property name to set (must be a top-level cabinet field; nested `parameters.*` are ignored)
+ * @param value - The new value to assign to the specified property
+ */
 function setCabinetField(
   state: ParametricState,
   cabinetId: string,
@@ -41,6 +56,13 @@ function setCabinetField(
   target[key] = value as any;
 }
 
+/**
+ * Applies a list of parameter and geometry deltas to a deep-cloned state and returns the updated state with recomputed constraints.
+ *
+ * @param state - The source ParametricState to clone and apply deltas to
+ * @param deltas - Ordered list of ParamDelta entries describing path-based updates
+ * @returns An object containing `state`: the updated ParametricState (with applied deltas and refreshed `updatedAt`), and `constraints`: the ConstraintSummary computed for that updated state
+ */
 function applyDeltaPure(
   state: ParametricState,
   deltas: ParamDelta[]
@@ -82,6 +104,12 @@ function applyDeltaPure(
   return { state: next, constraints };
 }
 
+/**
+ * Evaluate a parametric state and produce a constraint summary containing detected violations.
+ *
+ * @param state - The parametric state to evaluate for constraint violations
+ * @returns An object with `violations` (the list of detected constraint violations) and `hasBlockingErrors` — `true` if any violation has severity `'error'`, `false` otherwise
+ */
 function computeConstraints(state: ParametricState): ConstraintSummary {
   const violations: ConstraintSummary['violations'] = [];
   if (state.cabinets.length > 10) {
@@ -99,6 +127,13 @@ function computeConstraints(state: ParametricState): ConstraintSummary {
   };
 }
 
+/**
+ * Create a baseline ParametricState populated with a simple room, one cabinet, and default metadata.
+ *
+ * @param projectId - The project identifier to assign to the created state
+ * @param tenantId - The tenant identifier to assign to the created state
+ * @returns A ParametricState containing: the provided `projectId` and `tenantId`, a default `catalogVersionId`, a room with two walls and no openings, a single base cabinet, an empty constraint summary (`hasBlockingErrors: false`), and `updatedAt` set to the current timestamp
+ */
 function defaultState(projectId: ProjectId, tenantId: TenantId): ParametricState {
   return {
     projectId,
@@ -146,6 +181,15 @@ function defaultState(projectId: ProjectId, tenantId: TenantId): ParametricState
   };
 }
 
+/**
+ * Apply a sequence of parameter deltas to a parametric state, preferring a loaded WASM implementation and falling back to a TypeScript implementation when unavailable or on error.
+ *
+ * @param state - The current parametric state to update
+ * @param delta - An array of parameter deltas to apply to `state`
+ * @returns The updated `state` and the computed constraint summary for that state
+ *
+ * Side effects: persists the updated state in the internal state store under its `projectId`.
+ */
 export async function applyDelta(
   state: ParametricState,
   delta: ParamDelta[]
@@ -164,6 +208,13 @@ export async function applyDelta(
   return applyDeltaPure(state, delta);
 }
 
+/**
+ * Validate a project's design and produce a constraint summary for its current state.
+ *
+ * If a WASM-based validator is available and succeeds, its result is returned; otherwise constraints are computed from the stored state for `projectId` or from a default state.
+ *
+ * @returns The computed ConstraintSummary describing any violations and whether there are blocking errors
+ */
 export async function validateDesign(projectId: ProjectId): Promise<ConstraintSummary> {
   const wasm = await loadWasm();
   if (wasm.validate_design) {
@@ -180,14 +231,33 @@ export async function validateDesign(projectId: ProjectId): Promise<ConstraintSu
   return computeConstraints(state);
 }
 
+/**
+ * Retrieve the stored ParametricState for a project.
+ *
+ * @param projectId - Project identifier to look up in the in-memory state store
+ * @returns The stored ParametricState for `projectId`, or `undefined` if not present
+ */
 export function getStoredState(projectId: ProjectId): ParametricState | undefined {
   return stateStore.get(projectId as any);
 }
 
+/**
+ * Store the provided ParametricState in the internal in-memory state store under the given projectId.
+ *
+ * @param projectId - Identifier of the project whose state is being stored
+ * @param state - The ParametricState to store
+ */
 export function setStoredState(projectId: ProjectId, state: ParametricState): void {
   stateStore.set(projectId as any, state);
 }
 
+/**
+ * Create and persist a default ParametricState for the given project and tenant.
+ *
+ * @param projectId - Identifier for the project; used as the state's projectId and storage key
+ * @param tenantId - Identifier for the tenant set on the created state
+ * @returns The newly created and stored ParametricState
+ */
 export function createDefaultState(projectId: ProjectId, tenantId: TenantId): ParametricState {
   const base = defaultState(projectId, tenantId);
   stateStore.set(projectId as any, base);
