@@ -209,12 +209,12 @@ export const eventSchemas: Record<EventName, EventSchema> = {
 };
 
 /**
- * Build a typed event envelope containing metadata and headers for a domain event payload.
+ * Create a standardized event envelope for a domain event payload.
  *
- * @param payload - The domain event payload to include in the envelope
- * @param idGenerator - Function that produces a unique ULID to use as the envelope `id`
- * @param timestamp - Function that returns the envelope `producedAt` ISO timestamp (defaults to current time)
- * @returns An EventEnvelope wrapping `payload` with `id`, `name`, `version`, `producedAt`, and `headers` (`schema-version` and `event-name`)
+ * @param payload - The domain event payload to wrap
+ * @param idGenerator - Function that produces a ULID to use as the envelope `id`
+ * @param timestamp - Function that returns an ISO 8601 timestamp for `producedAt`; defaults to current time
+ * @returns An EventEnvelope containing the provided payload, generated `id`, `name`, `version`, `producedAt`, and `headers` (`schema-version` and `event-name`)
  */
 export function buildEnvelope<TPayload extends DomainEventPayload>(
   payload: TPayload,
@@ -235,9 +235,9 @@ export function buildEnvelope<TPayload extends DomainEventPayload>(
 }
 
 /**
- * Registers or replaces the event schema in the central registry using the schema's `name` as the key.
+ * Registers an EventSchema in the central eventSchemas registry.
  *
- * @param schema - The event schema to store; its `name` field determines the registry key. An existing schema with the same name will be overwritten.
+ * @param schema - The EventSchema to register; if a schema with the same `name` already exists it will be replaced
  */
 export function registerEventSchema(schema: EventSchema) {
   eventSchemas[schema.name] = schema;

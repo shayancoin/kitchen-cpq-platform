@@ -3,10 +3,10 @@ import { randomUUID } from 'crypto';
 import { logger } from '../instrumentation';
 
 /**
- * Generates new identifiers for CAD/CAM outputs for the given project quote.
+ * Generate ULID identifiers for CAD/CAM outputs for a given project, quote, tenant, and catalog snapshot.
  *
- * @param input - Object identifying the project, quote, tenant, and catalog snapshot
- * @returns `{ bomId, cncProgramId }` where `bomId` is the generated bill-of-materials identifier and `cncProgramId` is the generated CNC program identifier
+ * @param input - Context identifying the project and quote and the catalog snapshot used when producing the outputs
+ * @returns An object containing `bomId` (ULID for the bill of materials) and `cncProgramId` (ULID for the CNC program)
  */
 export async function generateCadCamOutputsActivity(input: {
   projectId: ProjectId;

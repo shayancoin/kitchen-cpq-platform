@@ -5,12 +5,12 @@ import { ReactNode, useState } from 'react';
 import { createTrpcClient, trpc } from '../src/lib/trpc-client';
 
 /**
- * Provides TRPC and React Query context to descendant components.
+ * Wraps `children` with TRPC and TanStack React Query providers so they share a common client and query context.
  *
- * The React Query client is configured to refetch every 4000ms and to not refetch on window focus.
+ * The internal QueryClient is configured to refetch queries every 4000 ms and not refetch on window focus.
  *
- * @param children - Elements to render within the TRPC and QueryClient providers
- * @returns A provider tree that supplies the TRPC client and the configured React Query client to its children
+ * @param children - The React nodes to render inside the providers.
+ * @returns A React element that provides TRPC and React Query contexts to `children`.
  */
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(

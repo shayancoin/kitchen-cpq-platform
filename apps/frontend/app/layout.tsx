@@ -10,8 +10,8 @@ export const metadata = {
 /**
  * Application root layout that provides the top-level HTML structure and wraps page content with Providers.
  *
- * @param children - The application content to render inside the body; it will be wrapped by the Providers component.
- * @returns The top-level `html` and `body` elements with styling, containing the provided `children` wrapped by `Providers`.
+ * @param children - The React nodes to render inside the layout's body within Providers
+ * @returns The top-level HTML element containing the body and Providers-wrapped content
  */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
