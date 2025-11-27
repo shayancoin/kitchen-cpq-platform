@@ -1,14 +1,22 @@
-import http from 'http';
-import https from 'https';
-import { ApplicationFailure } from '@temporalio/common';
-import { InstrumentationLogger } from '@kitchen-cpq/instrumentation-otel';
+import * as http from 'http';
+import * as https from 'https';
 import { trace, SpanStatusCode } from '@opentelemetry/api';
-import type { ProjectId, QuoteId, TenantId } from '@kitchen-cpq/shared-types';
+import type {
+  CatalogSnapshotRef,
+  CatalogVersionId,
+  ProjectId,
+  QuoteId,
+  TenantId
+} from '@kitchen-cpq/shared-types';
+import { ApplicationFailure } from '../temporal';
+import { InstrumentationLogger } from '../instrumentation';
 
 type RecomputeQuoteInput = {
   projectId: ProjectId;
   tenantId: TenantId;
   quoteId?: QuoteId;
+  catalogSnapshot?: CatalogSnapshotRef;
+  allowCatalogOverride?: boolean;
 };
 
 type HttpMethod = 'POST' | 'GET';
@@ -29,6 +37,10 @@ const CPQ_RECOMPUTE_PATH =
   process.env.CPQ_RECOMPUTE_PATH ?? '/api/cpq/recompute-quote';
 const CPQ_TIMEOUT_MS = Number(process.env.CPQ_TIMEOUT_MS ?? 10_000);
 const CPQ_MAX_ATTEMPTS = Number(process.env.CPQ_MAX_ATTEMPTS ?? 3);
+const DEFAULT_CATALOG_SNAPSHOT: CatalogSnapshotRef = {
+  id: (process.env.CATALOG_SNAPSHOT_ID ?? 'catalog-001') as CatalogVersionId,
+  hash: process.env.CATALOG_SNAPSHOT_HASH ?? 'hash-001'
+};
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -102,8 +114,9 @@ function isTransient(status: number) {
 
 export const cpqClient = {
   async recomputeQuote(input: RecomputeQuoteInput): Promise<void> {
-    const { projectId, tenantId, quoteId } = input;
+    const { projectId, tenantId, quoteId, allowCatalogOverride } = input;
     const idempotencyKey = buildIdempotencyKey(input);
+    const catalogSnapshot = input.catalogSnapshot ?? DEFAULT_CATALOG_SNAPSHOT;
 
     return tracer.startActiveSpan(
       'cpqClient.recomputeQuote',
@@ -120,7 +133,7 @@ export const cpqClient = {
           let attempt = 0;
           let lastError: unknown;
           const url = `${CPQ_BASE_URL}${CPQ_RECOMPUTE_PATH}`;
-          const payload = { projectId, tenantId, quoteId };
+          const payload = { projectId, tenantId, quoteId, catalogSnapshot, allowCatalogOverride };
 
           while (attempt < CPQ_MAX_ATTEMPTS) {
             attempt += 1;

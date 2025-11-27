@@ -1,11 +1,14 @@
-import http from 'http';
-import { Worker, NativeConnection } from '@temporalio/worker';
-import { trace } from '@opentelemetry/api';
-import { InstrumentationLogger } from '@kitchen-cpq/instrumentation-otel';
+import * as http from 'http';
+import { SpanStatusCode, trace } from '@opentelemetry/api';
+import { kafkaBroker } from '@kitchen-cpq/shared-kafka';
+import type { QuoteConfirmedEvent } from '@kitchen-cpq/shared-events';
 import {
   recomputeQuoteActivity,
   recomputeQuoteActivityOptions
 } from '../activities/cpqActivities';
+import { Client, NativeConnection, Worker } from '../temporal-runtime';
+import { KitchenOrderWorkflow } from '../workflows/KitchenOrderWorkflow';
+import { InstrumentationLogger } from '../instrumentation';
 
 type Histogram = {
   buckets: Record<string, number>;
@@ -127,6 +130,81 @@ function startMetricsServer(port = 9464) {
   });
 }
 
+function wireKafkaBridge() {
+  const client = new Client();
+
+  const isQuoteConfirmedPayload = (payload: unknown): payload is QuoteConfirmedEvent => {
+    if (!payload || typeof payload !== 'object') return false;
+    const p = payload as Record<string, unknown>;
+    return (
+      p.name === 'quote.confirmed' &&
+      typeof p.projectId === 'string' &&
+      typeof p.quoteId === 'string' &&
+      typeof p.tenantId === 'string' &&
+      typeof (p.catalog as { id?: unknown })?.id === 'string' &&
+      typeof (p.catalog as { hash?: unknown })?.hash === 'string'
+    );
+  };
+
+  kafkaBroker.subscribe('orders.lifecycle', async ({ envelope }) => {
+    await tracer.startActiveSpan(
+      'WorkflowBridge.handleQuoteConfirmed',
+      { kind: 2 as number },
+      async (span) => {
+        const payload = envelope.payload;
+        if (!isQuoteConfirmedPayload(payload)) {
+          logger.warn('workflow.bridge.quote-confirmed.invalid-payload', {
+            envelopeId: envelope.id
+          });
+          span.setStatus({ code: SpanStatusCode.ERROR, message: 'invalid payload' });
+          span.end();
+          return;
+        }
+
+        span.setAttributes({
+          'messaging.system': 'kafka',
+          'messaging.destination': 'orders.lifecycle',
+          'tenant.id': payload.tenantId,
+          'project.id': payload.projectId,
+          'quote.id': payload.quoteId
+        });
+
+        try {
+          logger.info('workflow.bridge.quote-confirmed', {
+            projectId: payload.projectId,
+            quoteId: payload.quoteId,
+            catalog: payload.catalog
+          });
+
+          await client.workflow.start(KitchenOrderWorkflow, {
+            taskQueue: 'kitchen-order-queue',
+            workflowId: `order-${payload.quoteId}`,
+            args: [
+              {
+                projectId: payload.projectId,
+                tenantId: payload.tenantId,
+                quoteId: payload.quoteId,
+                catalog: payload.catalog
+              }
+            ]
+          });
+          span.setStatus({ code: SpanStatusCode.OK });
+        } catch (err) {
+          logger.error('Failed to process orders.lifecycle event', {
+            error: (err as Error).message,
+            envelopeId: envelope.id
+          });
+          span.recordException(err as Error);
+          span.setStatus({ code: SpanStatusCode.ERROR });
+          throw err;
+        } finally {
+          span.end();
+        }
+      }
+    );
+  });
+}
+
 async function runWorker() {
   const connection = await NativeConnection.connect({
     address: process.env.TEMPORAL_ADDRESS ?? 'localhost:7233'
@@ -158,6 +236,7 @@ async function runWorker() {
     address: process.env.TEMPORAL_ADDRESS ?? 'localhost:7233'
   });
 
+  wireKafkaBridge();
   startMetricsServer(Number(process.env.METRICS_PORT ?? 9464));
 
   await tracer.startActiveSpan('TemporalWorker.run', async (span) => {

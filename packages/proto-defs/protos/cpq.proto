@@ -4,6 +4,8 @@ package cpq.v1;
 
 message PriceDeltaRequest {
   string project_id = 1;
+  string catalog_version_id = 2;
+  string catalog_hash = 3;
 }
 
 message PriceDeltaResponse {
@@ -13,6 +15,9 @@ message PriceDeltaResponse {
 
 message RecomputeQuoteRequest {
   string project_id = 1;
+  string catalog_version_id = 2;
+  string catalog_hash = 3;
+  bool allow_catalog_override = 4;
 }
 
 message QuoteLineItem {
@@ -39,10 +44,10 @@ message QuoteSummary {
   double margin_percent = 9;
   string catalog_version_id = 10;
   repeated QuoteLineItem line_items = 11;
+  string catalog_hash = 12;
 }
 
 service CpqService {
   rpc PriceDelta(PriceDeltaRequest) returns (PriceDeltaResponse);
   rpc RecomputeQuote(RecomputeQuoteRequest) returns (QuoteSummary);
 }
-

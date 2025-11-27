@@ -15,6 +15,22 @@
         "plugin:@typescript-eslint/recommended"
       ],
       "rules": {}
+    },
+    {
+      "files": ["services/workflow-orchestration-service/src/workers/index.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "../temporal",
+                "message": "Worker entrypoints must not import the dev-only Temporal stub; wire real @temporalio/* runtime instead."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

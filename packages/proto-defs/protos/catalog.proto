@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package catalog.v1;
+
+message CatalogVersion {
+  string id = 1;
+  string tenant_id = 2;
+  string label = 3;
+  string created_at = 4;
+  string created_by = 5;
+  string hash = 6;
+  string payload_uri = 7;
+}
+
+message GetActiveCatalogRequest {
+  string tenant_id = 1;
+}
+
+message GetActiveCatalogResponse {
+  CatalogVersion version = 1;
+}
+
+message PublishCatalogRequest {
+  string draft_id = 1;
+  string payload_uri = 2;
+  string created_by = 3;
+}
+
+message PublishCatalogResponse {
+  CatalogVersion version = 1;
+}
+
+service CatalogService {
+  rpc GetActiveCatalog(GetActiveCatalogRequest) returns (GetActiveCatalogResponse);
+  rpc PublishCatalog(PublishCatalogRequest) returns (PublishCatalogResponse);
+}

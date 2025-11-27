@@ -10,6 +10,8 @@ message StartOrderWorkflowRequest {
   string project_id = 1;
   string quote_id = 2;
   string tenant_id = 3;
+  string catalog_version_id = 4;
+  string catalog_hash = 5;
 }
 
 message StartOrderWorkflowResponse {
@@ -19,4 +21,3 @@ message StartOrderWorkflowResponse {
 service WorkflowService {
   rpc StartOrderWorkflow(StartOrderWorkflowRequest) returns (StartOrderWorkflowResponse);
 }
-
