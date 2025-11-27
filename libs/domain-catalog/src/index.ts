@@ -22,9 +22,10 @@ export interface CatalogDraft {
 }
 
 /**
- * Validate and parse an unknown value into a CatalogPayload using the CatalogPayloadSchema.
+ * Parse and validate a raw value into a catalog payload.
  *
- * @returns The parsed `CatalogPayload`.
+ * @param raw - The input value to validate and parse
+ * @returns The parsed `CatalogPayload`
  */
 export function parseCatalogPayload(raw: unknown): CatalogPayload {
   return CatalogPayloadSchema.parse(raw);
@@ -72,9 +73,9 @@ export function buildCatalogVersion(input: {
 }
 
 /**
- * Create a snapshot reference that identifies a catalog version by id and payload hash.
+ * Builds a CatalogSnapshotRef that identifies a catalog version by its id and payload hash.
  *
- * @returns A CatalogSnapshotRef containing the version's `id` and `hash`.
+ * @returns A CatalogSnapshotRef with the version's `id` and `hash`.
  */
 export function snapshotRefFromVersion(version: CatalogVersion): CatalogSnapshotRef {
   return {
@@ -130,15 +131,13 @@ export interface PublishSnapshotResult {
 }
 
 /**
- * Create and persist a catalog version from a draft and return its snapshot reference together with the correlation id.
+ * Publish a catalog draft by creating and saving a catalog version and return its snapshot reference alongside the correlation id.
  *
- * Persists a new catalog snapshot to the provided repository and derives a snapshot reference from the created version.
- *
- * @param draft - The catalog draft to publish (contains id, tenantId, label, payload, and rules)
- * @param payloadUri - The storage location URI of the catalog payload
- * @param createdBy - The user id that is recorded as the creator of the published version
+ * @param draft - The catalog draft to publish (id, tenantId, label, payload, and rules)
+ * @param payloadUri - Storage location URI of the catalog payload
+ * @param createdBy - User id recorded as the creator of the published version
  * @param correlationId - ULID used to correlate this publish operation with external workflows or logs
- * @returns An object containing the persisted catalog `version`, its snapshot `ref`, and the provided `correlationId`
+ * @returns The persisted catalog `version`, its snapshot `ref`, and the provided `correlationId`
  */
 export function publishSnapshot(
   repo: InMemoryCatalogRepository,

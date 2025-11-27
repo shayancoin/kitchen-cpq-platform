@@ -56,6 +56,18 @@ function recordActivityMetrics(name: string, durationMs: number, error = false) 
   }
 }
 
+/**
+ * Wraps an async activity implementation with an OpenTelemetry span and per-activity metrics.
+ *
+ * The returned wrapper starts a span with activity attributes, measures execution latency, updates in-memory metrics, and ends the span after completion. If the wrapped function throws, the error is recorded on the span and then rethrown.
+ *
+ * @param name - Logical name of the activity used for span attributes and metrics grouping
+ * @param fn - The activity implementation to execute
+ * @param timeouts - Timeout values applied as span attributes
+ * @param timeouts.startToClose - Start-to-close timeout string (e.g., "1m")
+ * @param timeouts.scheduleToClose - Schedule-to-close timeout string (e.g., "5m")
+ * @returns The wrapped async function that executes the activity, records tracing and metrics, and returns the activity's result (errors are propagated)
+ */
 function instrumentActivity<TArgs extends unknown[], TResult>(
   name: string,
   fn: (...args: TArgs) => Promise<TResult>,
@@ -87,10 +99,11 @@ function instrumentActivity<TArgs extends unknown[], TResult>(
 }
 
 /**
- * Starts an HTTP server that exposes a health endpoint and Prometheus-compatible metrics for instrumented activities.
+ * Start an HTTP server that exposes a health endpoint and Prometheus-formatted metrics for instrumented activities.
  *
- * The server responds to GET /health with JSON { status: 'ok' } and to GET /metrics with Prometheus-formatted metrics
- * derived from `activityMetrics` (throughput, errors, duration buckets, sum, and count) labeled by activity name.
+ * Exposes:
+ * - GET /health -> JSON `{ status: 'ok' }`
+ * - GET /metrics -> Prometheus-compatible metrics derived from `activityMetrics`, including per-activity throughput, errors, duration buckets (including `+Inf`), sum, and count.
  *
  * @param port - TCP port to listen on (default: 9464)
  */

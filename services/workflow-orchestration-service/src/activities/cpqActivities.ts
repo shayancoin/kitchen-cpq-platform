@@ -157,9 +157,13 @@ async function createIdempotencyStore(): Promise<IdempotencyStore> {
 const idempotencyStorePromise = createIdempotencyStore();
 
 /**
- * Recomputes quote pricing and constraints for a project.
+ * Recomputes quote pricing and constraints for a specific project.
  *
- * Operation is idempotent: a deduplication key is derived from the workflow id, activity name, and a SHA-256 hash of the input payload so repeated executions for the same payload are skipped.
+ * The activity is idempotent: repeated executions for the same workflow and input payload are skipped using a deduplication key derived from the workflow id and the payload.
+ *
+ * @param input - The activity input
+ * @param input.projectId - The project identifier whose quote should be recomputed
+ * @param input.tenantId - The tenant identifier that owns the project
  */
 export async function recomputeQuoteActivity(input: {
   projectId: ProjectId;
