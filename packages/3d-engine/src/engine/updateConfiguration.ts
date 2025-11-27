@@ -1,7 +1,7 @@
 import type { ParametricState } from '@kitchen-cpq/shared-types';
 import type { SceneHandle } from './createKitchenScene';
 
-const cabinetColor = { r: 0.8, g: 0.72, b: 0.65 };
+let babylonCache: typeof import('@babylonjs/core') | null = null;
 
 export async function updateSceneFromState(
   handle: SceneHandle,
@@ -22,10 +22,17 @@ export async function updateSceneFromState(
     return;
   }
 
-  const babylon = await import('@babylonjs/core');
-  const { MeshBuilder, Color3 } = babylon;
+  if (!babylonCache) {
+    babylonCache = await import('@babylonjs/core');
+  }
+  const babylon = babylonCache;
 
   const existing = handle.cabinets;
+  const base = handle.cabinetBaseMesh;
+  const material = handle.cabinetMaterial;
+  if (!base || !material) {
+    return;
+  }
 
   // Remove meshes that no longer exist
   for (const [id, mesh] of existing.entries()) {
@@ -38,15 +45,13 @@ export async function updateSceneFromState(
   for (const cab of state.cabinets) {
     let mesh = existing.get(cab.id);
     if (!mesh) {
-      mesh = MeshBuilder.CreateBox(
-        `cab-${cab.id}`,
-        { width: cab.width, height: cab.height, depth: cab.depth },
-        handle.scene
-      );
-      mesh.material = new babylon.StandardMaterial(`cab-mat-${cab.id}`, handle.scene);
-      mesh.material.diffuseColor = new Color3(cabinetColor.r, cabinetColor.g, cabinetColor.b);
+      mesh = base.createInstance(`cab-${cab.id}`);
+      mesh.material = material;
       existing.set(cab.id, mesh);
     }
+    mesh.scaling.x = cab.width;
+    mesh.scaling.y = cab.height;
+    mesh.scaling.z = cab.depth;
     mesh.position.x = cab.position + cab.width / 2;
     mesh.position.y = cab.height / 2;
     mesh.position.z = cab.depth / 2;

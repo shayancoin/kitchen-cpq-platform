@@ -45,7 +45,7 @@ export interface ValidateDesignResponse {
   constraints: ConstraintSummary;
 }
 
-const nowIso = () => new Date().toISOString();
+
 
 export class ParametricKernelService {
   private ensureBaseState(projectId: string): ParametricState {

@@ -12,9 +12,8 @@ describe('ConfiguratorSessionService', () => {
   });
 
   it('mutates state via kernel and persists session', async () => {
-    const response = await service.mutate({
-      tenantId: 'tenant-1' as any,
-      userId: 'user-1' as any,
+    const principal = { tenantId: 'tenant-1' as any, userId: 'user-1' as any, roles: ['dealer'] as any };
+    const response = await service.mutate(principal, {
       projectId: 'proj-1' as any,
       deltas: [{ path: 'cabinets.cab-1.width' as any, value: 800 }],
       requestGallery: false
@@ -25,11 +24,16 @@ describe('ConfiguratorSessionService', () => {
   });
 
   it('validates existing session state', async () => {
-    const constraints = await service.validate({
-      tenantId: 'tenant-1' as any,
-      userId: 'user-1' as any,
+    const principal = { tenantId: 'tenant-1' as any, userId: 'user-1' as any, roles: ['dealer'] as any };
+    const constraints = await service.validate(principal, {
       projectId: 'proj-1' as any
     });
-    expect(constraints.violations.length).toBeGreaterThanOrEqual(0);
+    expect(Array.isArray(constraints.violations)).toBe(true);
+    constraints.violations.forEach((v) => {
+      expect(typeof v.code).toBe('string');
+      expect(typeof v.message).toBe('string');
+      expect(Array.isArray(v.affectedCabinetIds)).toBe(true);
+    });
+    expect(constraints.hasBlockingErrors).toBe(false);
   });
 });

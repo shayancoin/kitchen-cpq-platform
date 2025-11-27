@@ -3,6 +3,8 @@
 //! representation of `ParametricState` and recompute lightweight
 //! constraint summaries (e.g., max cabinet count).
 
+#![forbid(unsafe_code)]
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use wasm_bindgen::prelude::*;
@@ -10,7 +12,7 @@ use wasm_bindgen::prelude::*;
 #[derive(Deserialize)]
 struct ParamDelta {
     path: String,
-    value_json: Value,
+    value: Value,
 }
 
 #[derive(Serialize)]
@@ -125,7 +127,7 @@ pub fn apply_delta(state_json: String, delta_json: String) -> String {
     let deltas: Vec<ParamDelta> = serde_json::from_str(&delta_json).unwrap_or_default();
 
     for delta in deltas {
-        set_path(&mut state, &delta.path, delta.value_json);
+        set_path(&mut state, &delta.path, delta.value);
     }
 
     let constraints = compute_constraints(&state);

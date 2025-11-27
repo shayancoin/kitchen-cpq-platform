@@ -5,6 +5,6 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@babylonjs/core": "7.47.0"
+    "@babylonjs/core": "^8.38.0"
   }
 }

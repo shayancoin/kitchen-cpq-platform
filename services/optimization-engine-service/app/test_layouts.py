@@ -5,7 +5,7 @@ from .main import app
 client = TestClient(app)
 
 
-def test_suggest_layouts_returns_variant():
+def test_suggest_layouts_returns_variant() -> None:
   response = client.post(
       "/suggest-layouts",
       json={

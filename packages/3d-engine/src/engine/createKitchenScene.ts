@@ -1,4 +1,5 @@
 import type { ParametricState } from '@kitchen-cpq/shared-types';
+import type { Mesh, InstancedMesh, StandardMaterial } from '@babylonjs/core';
 import { updateSceneFromState } from './updateConfiguration';
 
 type BabylonModule = typeof import('@babylonjs/core');
@@ -8,7 +9,9 @@ export interface SceneHandle {
   canvas: HTMLCanvasElement;
   engine?: any;
   scene?: any;
-  cabinets?: Map<string, any>;
+  cabinets?: Map<string, Mesh | InstancedMesh>;
+  cabinetMaterial?: StandardMaterial;
+  cabinetBaseMesh?: Mesh;
   dispose?: () => void;
 }
 
@@ -44,8 +47,16 @@ export async function createKitchenScene(
     return handle;
   }
 
-  const { Engine, Scene, HemisphericLight, Vector3, ArcRotateCamera, MeshBuilder, Color3 } =
-    babylon;
+  const {
+    Engine,
+    Scene,
+    HemisphericLight,
+    Vector3,
+    ArcRotateCamera,
+    MeshBuilder,
+    Color3,
+    StandardMaterial
+  } = babylon;
   const engine = new Engine(canvas, true);
   const scene = new Scene(engine);
   const camera = new ArcRotateCamera(
@@ -71,13 +82,17 @@ export async function createKitchenScene(
   floor.receiveShadows = true;
 
   // Walls (simple boxes)
-  const wallMaterial = new babylon.StandardMaterial('wall-mat', scene);
+  const wallMaterial = new StandardMaterial('wall-mat', scene);
   wallMaterial.diffuseColor = new Color3(0.95, 0.95, 0.95);
 
   for (const wall of initialState.room.perimeter) {
     const dx = wall.end.x - wall.start.x;
     const dy = wall.end.y - wall.start.y;
-    const length = Math.sqrt(dx * dx + dy * dy) || 1;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    if (length < 1) {
+      // Skip degenerate wall segments
+      continue;
+    }
     const wallMesh = MeshBuilder.CreateBox(
       `wall-${wall.id}`,
       { width: length, height: wall.height, depth: wall.thickness },
@@ -90,9 +105,18 @@ export async function createKitchenScene(
     wallMesh.material = wallMaterial;
   }
 
+  // Shared cabinet material and base mesh (unit cube) to enable instancing.
+  const cabinetMaterial = new StandardMaterial('cabinet-mat', scene);
+  cabinetMaterial.diffuseColor = new Color3(0.8, 0.72, 0.65);
+  const cabinetBaseMesh = MeshBuilder.CreateBox('cabinet-base', { size: 1 }, scene);
+  cabinetBaseMesh.material = cabinetMaterial;
+  cabinetBaseMesh.isVisible = false; // use only for instances
+
   handle.engine = engine;
   handle.scene = scene;
   handle.cabinets = new Map();
+  handle.cabinetMaterial = cabinetMaterial;
+  handle.cabinetBaseMesh = cabinetBaseMesh;
   handle.dispose = () => {
     scene.dispose();
     engine.dispose();

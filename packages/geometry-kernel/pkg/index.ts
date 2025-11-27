@@ -48,7 +48,7 @@ function applyDeltaPure(
   for (const delta of deltas) {
     const segments = delta.path.split('.');
     if (segments[0] === 'cabinets' && segments.length >= 3) {
-      const [_, cabinetId, prop, ...rest] = segments;
+      const [, cabinetId, prop, ...rest] = segments;
       if (prop === 'parameters' && rest.length > 0) {
         const paramKey = rest.join('.');
         const cab = next.cabinets.find((c) => c.id === (cabinetId as any));
@@ -151,8 +151,8 @@ export async function applyDelta(
 ): Promise<{ state: ParametricState; constraints: ConstraintSummary }> {
   const wasm = await loadWasm();
   if (wasm.apply_delta) {
-    const resultJson = wasm.apply_delta(JSON.stringify(state), JSON.stringify(delta));
     try {
+      const resultJson = wasm.apply_delta(JSON.stringify(state), JSON.stringify(delta));
       const parsed = JSON.parse(resultJson) as { state: ParametricState; constraints: ConstraintSummary };
       stateStore.set(parsed.state.projectId as any, parsed.state);
       return parsed;

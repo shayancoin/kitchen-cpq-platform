@@ -12,9 +12,13 @@ const PROJECT_ID = process.env.PROJECT_ID ?? 'perf-demo';
 
 async function mutateOnce(position: number): Promise<number> {
   const start = performance.now();
+  const token = process.env.AUTH_TOKEN;
   await fetch(`${BASE}/sessions/mutate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
     body: JSON.stringify({
       tenantId: 'tenant-demo',
       userId: 'user-demo',
@@ -28,8 +32,14 @@ async function mutateOnce(position: number): Promise<number> {
 
 function p95(samples: number[]): number {
   const sorted = [...samples].sort((a, b) => a - b);
-  const idx = Math.floor(0.95 * (sorted.length - 1));
-  return sorted[idx] || 0;
+  const n = sorted.length;
+  if (n === 0) return 0;
+  const pos = (n - 1) * 0.95;
+  const lower = Math.floor(pos);
+  const upper = Math.ceil(pos);
+  if (lower === upper) return sorted[lower];
+  const weight = pos - lower;
+  return sorted[lower] * (1 - weight) + sorted[upper] * weight;
 }
 
 async function run() {

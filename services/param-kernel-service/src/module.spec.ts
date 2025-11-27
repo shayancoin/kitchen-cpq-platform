@@ -1,12 +1,13 @@
 import { ParametricKernelService } from './module';
 import { createDefaultState, setStoredState } from '@kitchen-cpq/geometry-kernel';
+import type { ProjectId } from '@kitchen-cpq/shared-types';
 
 describe('ParametricKernelService', () => {
   const service = new ParametricKernelService();
 
   it('applies deltas and preserves project metadata', async () => {
-    const projectId = 'proj-1';
-    createDefaultState(projectId as any);
+    const projectId: ProjectId = 'proj-1' as ProjectId;
+    createDefaultState(projectId);
     const response = await service.applyDelta({
       project_id: projectId,
       deltas: [{ path: 'cabinets.cab-1.width', value_json: JSON.stringify(900) }]
@@ -19,13 +20,13 @@ describe('ParametricKernelService', () => {
   });
 
   it('detects simple constraint violations (max cabinet count)', async () => {
-    const projectId = 'proj-constraints';
-    const base = createDefaultState(projectId as any);
+    const projectId: ProjectId = 'proj-constraints' as ProjectId;
+    const base = createDefaultState(projectId);
     base.cabinets = Array.from({ length: 11 }).map((_, idx) => ({
       ...base.cabinets[0],
       id: `cab-${idx}`
-    })) as any;
-    setStoredState(projectId as any, base);
+    }));
+    setStoredState(projectId, base);
 
     const result = await service.validateDesign({ project_id: projectId });
     expect(result.constraints.hasBlockingErrors).toBe(true);
