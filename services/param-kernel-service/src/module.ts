@@ -49,7 +49,9 @@ export interface ValidateDesignResponse {
 
 export class ParametricKernelService {
   private ensureBaseState(projectId: string): ParametricState {
-    return getStoredState(projectId as any) ?? createDefaultState(projectId as any);
+    return (
+      getStoredState(projectId as any) ?? createDefaultState(projectId as any, 'tenant-demo' as any)
+    );
   }
 
   async applyDelta(req: ApplyDeltaRequest): Promise<ApplyDeltaResponse> {

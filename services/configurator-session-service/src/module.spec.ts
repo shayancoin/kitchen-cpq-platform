@@ -1,4 +1,5 @@
 import { ConfiguratorSessionService } from './module';
+import type { TenantId, UserId, Role } from '@kitchen-cpq/shared-types';
 
 describe('ConfiguratorSessionService', () => {
   const service = new ConfiguratorSessionService();
@@ -12,7 +13,11 @@ describe('ConfiguratorSessionService', () => {
   });
 
   it('mutates state via kernel and persists session', async () => {
-    const principal = { tenantId: 'tenant-1' as any, userId: 'user-1' as any, roles: ['dealer'] as any };
+    const principal = {
+      tenantId: 'tenant-1' as TenantId,
+      userId: 'user-1' as UserId,
+      roles: ['dealer' as Role]
+    };
     const response = await service.mutate(principal, {
       projectId: 'proj-1' as any,
       deltas: [{ path: 'cabinets.cab-1.width' as any, value: 800 }],
@@ -24,7 +29,11 @@ describe('ConfiguratorSessionService', () => {
   });
 
   it('validates existing session state', async () => {
-    const principal = { tenantId: 'tenant-1' as any, userId: 'user-1' as any, roles: ['dealer'] as any };
+    const principal = {
+      tenantId: 'tenant-1' as TenantId,
+      userId: 'user-1' as UserId,
+      roles: ['dealer' as Role]
+    };
     const constraints = await service.validate(principal, {
       projectId: 'proj-1' as any
     });

@@ -1,4 +1,4 @@
-import type { ConstraintSummary, ParamDelta, ParametricState, ProjectId } from '@kitchen-cpq/shared-types';
+import type { ConstraintSummary, ParamDelta, ParametricState, ProjectId, TenantId } from '@kitchen-cpq/shared-types';
 
 export declare function applyDelta(
   state: ParametricState,
@@ -9,4 +9,4 @@ export declare function validateDesign(projectId: ProjectId): Promise<Constraint
 
 export declare function getStoredState(projectId: ProjectId): ParametricState | undefined;
 export declare function setStoredState(projectId: ProjectId, state: ParametricState): void;
-export declare function createDefaultState(projectId: ProjectId): ParametricState;
+export declare function createDefaultState(projectId: ProjectId, tenantId: TenantId): ParametricState;

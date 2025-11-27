@@ -91,7 +91,8 @@ def solve_layout(goals: LayoutGoals, max_positions: int = 5) -> List[int]:
     openness_weight = goals.opennessWeight
 
     total_cabinets = cp_model.LinearExpr.Sum(occupancy)
-    cost = sum((i + 1) * 10 * occupancy[i] for i in range(max_positions))
+    weights = [(i + 1) * 10 for i in range(max_positions)]
+    cost = cp_model.LinearExpr.WeightedSum(occupancy, weights)
     openness = max_positions - total_cabinets
 
     model.Maximize(

@@ -33,10 +33,10 @@ function computeConstraints(state) {
   };
 }
 
-function defaultState(projectId) {
+function defaultState(projectId, tenantId) {
   const base = {
     projectId,
-    tenantId: 'tenant-demo',
+    tenantId,
     catalogVersionId: 'catalog-001',
     room: {
       id: 'room-1',
@@ -133,7 +133,7 @@ async function validateDesign(projectId) {
       // fall back
     }
   }
-  const state = stateStore.get(projectId) || defaultState(projectId);
+  const state = stateStore.get(projectId) || defaultState(projectId, 'tenant-demo');
   return computeConstraints(state);
 }
 
@@ -145,8 +145,8 @@ function setStoredState(projectId, state) {
   stateStore.set(projectId, state);
 }
 
-function createDefaultState(projectId) {
-  return defaultState(projectId);
+function createDefaultState(projectId, tenantId) {
+  return defaultState(projectId, tenantId);
 }
 
 module.exports = {

@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { getTracer, getLogger, getMetricsRegistry } from '@kitchen-cpq/instrumentation-otel';
+import { verifyAuthToken } from '@kitchen-cpq/shared-auth';
 import type {
   ConstraintSummary,
   LayoutGoals,
@@ -192,7 +193,7 @@ type RedisLike = {
   quit(): Promise<void>;
 };
 
-class RedisSessionStore implements SessionStore {
+export class RedisSessionStore implements SessionStore {
   constructor(private readonly client: RedisLike, private readonly defaultTtlMs = 300_000) {}
 
   async get(key: SessionKey): Promise<ParametricState | null> {
@@ -200,7 +201,7 @@ class RedisSessionStore implements SessionStore {
       const raw = await this.client.get(key);
       return raw ? (JSON.parse(raw) as ParametricState) : null;
     } catch (err) {
-      console.error('redis get failed', { key, error: err instanceof Error ? err.message : String(err) });
+      getLogger().error('redis get failed', { key, error: err instanceof Error ? err.message : String(err) });
       throw err;
     }
   }
@@ -209,7 +210,7 @@ class RedisSessionStore implements SessionStore {
     try {
       await this.client.set(key, JSON.stringify(state), { PX: ttlMs });
     } catch (err) {
-      console.error('redis set failed', { key, error: err instanceof Error ? err.message : String(err) });
+      getLogger().error('redis set failed', { key, error: err instanceof Error ? err.message : String(err) });
       throw err;
     }
   }
@@ -218,7 +219,7 @@ class RedisSessionStore implements SessionStore {
     try {
       await this.client.del(key);
     } catch (err) {
-      console.error('redis delete failed', { key, error: err instanceof Error ? err.message : String(err) });
+      getLogger().error('redis delete failed', { key, error: err instanceof Error ? err.message : String(err) });
       throw err;
     }
   }
@@ -245,7 +246,7 @@ export class ConfiguratorSessionService {
     const key = this.key(tenantId, userId, projectId);
     const cached = await this.sessionStore.get(key);
     if (cached) return cached;
-    const state = createDefaultState(projectId);
+    const state = createDefaultState(projectId, tenantId);
     await this.sessionStore.set(key, state, this.sessionTtlMs);
     return state;
   }
@@ -287,15 +288,21 @@ export class ConfiguratorSessionController {
   constructor(private readonly sessions: ConfiguratorSessionService) {}
 
   private extractPrincipal(req: Request): { tenantId: TenantId; userId: UserId; roles: Role[] } {
-    const tenantId = req.headers['x-tenant-id'];
-    const userId = req.headers['x-user-id'];
-    const roles = req.headers['x-roles'];
-    if (typeof tenantId !== 'string' || typeof userId !== 'string') {
-      throw new UnauthorizedException('Missing principal');
+    const auth = req.headers['authorization'];
+    if (!auth || Array.isArray(auth) || !auth.toLowerCase().startsWith('bearer ')) {
+      throw new UnauthorizedException('Missing bearer token');
     }
-    const parsedRoles: Role[] =
-      typeof roles === 'string' ? roles.split(',').map((r) => r.trim() as Role).filter(Boolean) : [];
-    return { tenantId: tenantId as TenantId, userId: userId as UserId, roles: parsedRoles };
+    const token = auth.slice(7);
+    try {
+      const claims = verifyAuthToken(token, {
+        issuer: process.env.JWT_ISSUER,
+        audience: process.env.JWT_AUDIENCE,
+        secret: process.env.JWT_SECRET
+      });
+      return { tenantId: claims.tenantId as TenantId, userId: claims.sub as UserId, roles: claims.roles };
+    } catch (err) {
+      throw new UnauthorizedException('Invalid or missing JWT claims');
+    }
   }
 
   private ensureRole(principal: { roles: Role[] }, allowed: Role[]): void {
@@ -382,7 +389,31 @@ export class ConfiguratorSessionController {
 
 @Module({
   controllers: [ConfiguratorSessionController],
-  providers: [ConfiguratorSessionService],
+  providers: [
+    {
+      provide: ConfiguratorSessionService,
+      useFactory: async () => {
+        const redisUrl = process.env.REDIS_URL;
+        if (redisUrl) {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const { createClient } = require('redis');
+            const client: RedisLike = createClient({ url: redisUrl });
+            if (client.connect) {
+              await client.connect();
+            }
+            return new ConfiguratorSessionService(new RedisSessionStore(client));
+          } catch (err) {
+            getLogger().error('Failed to initialize Redis, falling back to memory', {
+              error: err instanceof Error ? err.message : String(err)
+            });
+            return new ConfiguratorSessionService(new InMemorySessionStore());
+          }
+        }
+        return new ConfiguratorSessionService(new InMemorySessionStore());
+      }
+    }
+  ],
   exports: [ConfiguratorSessionService]
 })
 export class ConfiguratorSessionModule {}

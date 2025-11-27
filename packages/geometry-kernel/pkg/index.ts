@@ -3,7 +3,8 @@ import type {
   ConstraintSummary,
   ParamDelta,
   ParametricState,
-  ProjectId
+  ProjectId,
+  TenantId
 } from '@kitchen-cpq/shared-types';
 
 type WasmModule = {
@@ -98,10 +99,10 @@ function computeConstraints(state: ParametricState): ConstraintSummary {
   };
 }
 
-function defaultState(projectId: ProjectId): ParametricState {
+function defaultState(projectId: ProjectId, tenantId: TenantId): ParametricState {
   return {
     projectId,
-    tenantId: 'tenant-demo' as any,
+    tenantId,
     catalogVersionId: 'catalog-001' as any,
     room: {
       id: 'room-1' as any,
@@ -173,7 +174,9 @@ export async function validateDesign(projectId: ProjectId): Promise<ConstraintSu
       // fall back
     }
   }
-  const state = stateStore.get(projectId as any) ?? defaultState(projectId);
+  const state =
+    stateStore.get(projectId as any) ??
+    defaultState(projectId, 'tenant-demo' as TenantId);
   return computeConstraints(state);
 }
 
@@ -185,8 +188,8 @@ export function setStoredState(projectId: ProjectId, state: ParametricState): vo
   stateStore.set(projectId as any, state);
 }
 
-export function createDefaultState(projectId: ProjectId): ParametricState {
-  const base = defaultState(projectId);
+export function createDefaultState(projectId: ProjectId, tenantId: TenantId): ParametricState {
+  const base = defaultState(projectId, tenantId);
   stateStore.set(projectId as any, base);
   return base;
 }

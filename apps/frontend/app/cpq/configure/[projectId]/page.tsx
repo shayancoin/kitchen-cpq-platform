@@ -80,6 +80,7 @@ export default function ConfigurePage({
     null
   );
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const debounceDelayMs = 120;
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -95,36 +96,34 @@ export default function ConfigurePage({
       .then((initial) => {
         setState(initial);
         setConstraints(initial.constraints);
+        setLoadError(null);
+      })
+      .catch((err) => {
+        console.error("failed to load state", err);
+        setLoadError("Failed to load configurator state. Please refresh or try again later.");
       })
       .finally(() => setLoading(false));
   }, [params.projectId]);
 
   useEffect(() => {
-    if (!state || !canvasRef.current) return;
-    let disposed = false;
+    if (!state || !canvasRef.current || sceneHandle.current) return;
 
     const initScene = async () => {
-      if (sceneHandle.current?.dispose) {
-        sceneHandle.current.dispose();
-      }
       const handle = await createKitchenScene(canvasRef.current!, state);
-      if (!disposed) {
-        sceneHandle.current = handle;
-      } else {
-        handle.dispose?.();
-      }
+      sceneHandle.current = handle;
     };
 
-    initScene();
+    void initScene();
+  }, [params.projectId, state, canvasRef]);
 
+  useEffect(() => {
     return () => {
-      disposed = true;
       if (sceneHandle.current?.dispose) {
         sceneHandle.current.dispose();
       }
       sceneHandle.current = null;
     };
-  }, [params.projectId, canvasRef]);
+  }, [params.projectId]);
 
   useEffect(() => {
     if (!state || !sceneHandle.current) return;
@@ -153,17 +152,28 @@ export default function ConfigurePage({
     (path: string, value: number) => {
       cancelDebounce();
       debounceTimer.current = setTimeout(() => {
-        updateField(path, value);
-        debounceTimer.current = null;
+        (async () => {
+          try {
+            await updateField(path, value);
+          } catch (err) {
+            console.error("debounced update failed", err);
+          } finally {
+            debounceTimer.current = null;
+          }
+        })();
       }, debounceDelayMs);
     },
     [cancelDebounce, updateField, debounceDelayMs]
   );
 
   const flushUpdate = useCallback(
-    (path: string, value: number) => {
+    async (path: string, value: number) => {
       cancelDebounce();
-      updateField(path, value);
+      try {
+        await updateField(path, value);
+      } catch (err) {
+        console.error("flush update failed", err);
+      }
     },
     [cancelDebounce, updateField]
   );
@@ -174,11 +184,29 @@ export default function ConfigurePage({
     };
   }, [cancelDebounce]);
 
-  if (loading || !state) {
+  if (loading) {
     return <div className="p-6 text-sm text-gray-500">Loading configurator...</div>;
   }
 
-  const primaryCabinet = state.cabinets[0];
+  if (loadError) {
+    return <div className="p-6 text-sm text-red-600">{loadError}</div>;
+  }
+
+  if (!state) {
+    return <div className="p-6 text-sm text-gray-500">No state loaded.</div>;
+  }
+
+  const primaryCabinet = state.cabinets?.[0];
+
+  if (!primaryCabinet) {
+    return (
+      <div className="p-6 text-sm text-gray-500">
+        No cabinets available for this project. Please try reloading or contact support.
+      </div>
+    );
+  }
+
+  const primaryCabinetPath = `cabinets.${primaryCabinet.id}`;
 
   return (
     <div className="grid grid-cols-3 gap-4 p-6 h-full min-h-[80vh]">
@@ -191,14 +219,14 @@ export default function ConfigurePage({
             className="w-full border rounded px-2 py-1"
             value={primaryCabinet.width}
             onChange={(e) =>
-              debouncedUpdate("cabinets.cab-1.width", Number(e.target.value))
+              debouncedUpdate(`${primaryCabinetPath}.width`, Number(e.target.value))
             }
             onBlur={(e) =>
-              flushUpdate("cabinets.cab-1.width", Number(e.target.value))
+              flushUpdate(`${primaryCabinetPath}.width`, Number(e.target.value))
             }
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                flushUpdate("cabinets.cab-1.width", Number((e.target as HTMLInputElement).value));
+                flushUpdate(`${primaryCabinetPath}.width`, Number((e.target as HTMLInputElement).value));
               }
             }}
           />
@@ -213,17 +241,17 @@ export default function ConfigurePage({
             value={primaryCabinet.position}
             onChange={(e) =>
               debouncedUpdate(
-                "cabinets.cab-1.position",
+                `${primaryCabinetPath}.position`,
                 Number(e.target.value)
               )
             }
             onBlur={(e) =>
-              flushUpdate("cabinets.cab-1.position", Number(e.target.value))
+              flushUpdate(`${primaryCabinetPath}.position`, Number(e.target.value))
             }
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 flushUpdate(
-                  "cabinets.cab-1.position",
+                  `${primaryCabinetPath}.position`,
                   Number((e.target as HTMLInputElement).value)
                 );
               }

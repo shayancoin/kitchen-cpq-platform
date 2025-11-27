@@ -7,7 +7,7 @@ describe('ParametricKernelService', () => {
 
   it('applies deltas and preserves project metadata', async () => {
     const projectId: ProjectId = 'proj-1' as ProjectId;
-    createDefaultState(projectId);
+    createDefaultState(projectId, 'tenant-test' as any);
     const response = await service.applyDelta({
       project_id: projectId,
       deltas: [{ path: 'cabinets.cab-1.width', value_json: JSON.stringify(900) }]
@@ -21,7 +21,7 @@ describe('ParametricKernelService', () => {
 
   it('detects simple constraint violations (max cabinet count)', async () => {
     const projectId: ProjectId = 'proj-constraints' as ProjectId;
-    const base = createDefaultState(projectId);
+    const base = createDefaultState(projectId, 'tenant-test' as any);
     base.cabinets = Array.from({ length: 11 }).map((_, idx) => ({
       ...base.cabinets[0],
       id: `cab-${idx}`

@@ -20,8 +20,6 @@ async function mutateOnce(position: number): Promise<number> {
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     },
     body: JSON.stringify({
-      tenantId: 'tenant-demo',
-      userId: 'user-demo',
       projectId: PROJECT_ID,
       deltas: [{ path: 'cabinets.cab-1.position', value: position }],
       requestGallery: false
