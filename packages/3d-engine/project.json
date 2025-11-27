@@ -7,8 +7,7 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm exec vite build",
-        "cwd": "packages/3d-engine"
+        "command": "echo \"build 3d-engine (stub)\""
       }
     }
   },

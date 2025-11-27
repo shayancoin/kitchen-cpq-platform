@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package identity.v1;
 
-import "google/protobuf/timestamp.proto";
-
 message ValidateTokenRequest {
   string jwt = 1;
 }
@@ -13,7 +11,7 @@ message ValidateTokenResponse {
   string user_id = 2;
   string tenant_id = 3;
   repeated string roles = 4;
-  google.protobuf.Timestamp expires_at = 5;
+  string expires_at = 5; // ISO8601
 }
 
 service IdentityService {

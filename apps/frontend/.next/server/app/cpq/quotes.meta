@@ -1,0 +1,17 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(dealer)/layout,_N_T_/(dealer)/cpq/layout,_N_T_/(dealer)/cpq/quotes/layout,_N_T_/(dealer)/cpq/quotes/page,_N_T_/cpq/quotes"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KGRlYWxlcik/cpq/quotes/__PAGE__",
+    "/!KGRlYWxlcik/cpq/quotes",
+    "/!KGRlYWxlcik/cpq",
+    "/!KGRlYWxlcik",
+    "/_index",
+    "/_head"
+  ]
+}

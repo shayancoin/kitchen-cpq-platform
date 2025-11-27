@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[35524,["/_next/static/chunks/8b7ca8338165a798.js","/_next/static/chunks/ad1ed22a51c5950c.js"],"QuoteTable"]
+3:I[14246,["/_next/static/chunks/6ac2dcfdf2c417a2.js","/_next/static/chunks/f57dba553595a62e.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"buildId":"_yKOOr2Omo82jdi109Z1h","rsc":["$","$1","c",{"children":[["$","main",null,{"className":"page-shell","children":["$","section",null,{"className":"w-full p-6 space-y-4","children":[["$","div",null,{"className":"flex items-center justify-between","children":["$","div",null,{"children":[["$","p",null,{"className":"text-sm text-slate-500","children":"CPQ"}],["$","h1",null,{"className":"text-2xl font-semibold text-slate-900","children":"Quotes"}]]}]}],["$","$L2",null,{"quotes":[{"id":"quote-demo","projectId":"demo-project","tenantId":"tenant-demo","status":"draft","currency":"USD","subtotal":0,"tax":0,"total":0,"marginPercent":0,"createdAt":"2025-11-27T02:43:22.911Z","updatedAt":"2025-11-27T02:43:22.911Z","catalogVersion":{"id":"catalog-001","hash":"hash-001"},"lineItems":[]}],"loading":false}]]}]}],[["$","script","script-0",{"src":"/_next/static/chunks/ad1ed22a51c5950c.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"loading":null,"isPartial":false}
+5:null

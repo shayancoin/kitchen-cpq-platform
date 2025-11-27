@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Shell } from '@kitchen-cpq/ui-kit';
 import {
   init as initConfigurator,
@@ -47,7 +47,7 @@ function ConfiguratorWrapper({
     });
 
     return () => {
-      sessionRef.current?.destroy();
+      sessionRef.current?.destroy?.();
     };
     // session is managed inside this effect; omit from deps to avoid re-init loops.
   }, [quoteId, tenantId, locale, authToken, callbacks]);
@@ -63,10 +63,10 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8">
         <div className="flex items-baseline justify-between">
           <div>
-            <p className="text-sm uppercase text-muted-foreground">Quote</p>
+            <p className="text-sm uppercase text-slate-500">Quote</p>
             <h1 className="text-2xl font-semibold leading-tight">Quote #{quoteId}</h1>
           </div>
-          <span className="text-sm text-muted-foreground">CPQ Configurator</span>
+          <span className="text-sm text-slate-500">CPQ Configurator</span>
         </div>
 
         <ConfiguratorWrapper

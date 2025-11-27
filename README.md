@@ -141,7 +141,7 @@ External donor templates are cloned into `external-templates/` and treated as re
 
 Prereqs:
 
-- Node 20.x (recommended)  
+- **Node 20.x only** (use `nvm use` with `.nvmrc`, CI is pinned to Node 20)  
 - pnpm 9.x
 
 Install dependencies (ensuring Node 20 is the active runtime, e.g. via `nvm use 20`):

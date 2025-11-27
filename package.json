@@ -14,8 +14,8 @@
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
-    "node": ">=20.19.0",
-    "pnpm": ">=9"
+    "node": "20.x",
+    "pnpm": "9.x"
   },
   "devDependencies": {
     "@nestjs/common": "^9.4.3",
@@ -23,7 +23,7 @@
     "@nestjs/platform-express": "^9.4.3",
     "@nx/jest": "22.1.2",
     "@nx/next": "22.1.2",
-    "@trpc/server": "^10.45.2",
+    "@playwright/test": "^1.50.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.10.0",
     "@types/react": "^18.3.0",
@@ -44,6 +44,8 @@
     "zod": "^3.25.76"
   },
   "dependencies": {
+    "@trpc/client": "^10.45.2",
+    "@trpc/server": "^10.45.2",
     "jsonwebtoken": "^9.0.2"
   }
 }
