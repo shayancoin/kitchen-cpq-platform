@@ -27,6 +27,9 @@ export interface ParamDelta {
   value: number | string | boolean;
 }
 
+// Alias commonly used by client SDKs
+export type ParametricDelta = ParamDelta;
+
 export interface LayoutGoals {
   storageWeight: number;
   budgetWeight: number;
@@ -51,4 +54,3 @@ export interface LayoutVariant {
     ergonomicsScore: number;
   };
 }
-

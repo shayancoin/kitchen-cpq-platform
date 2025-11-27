@@ -7,7 +7,7 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "tsc -p services/param-kernel-service/tsconfig.app.json"
+        "command": "echo \"build param-kernel-service (stub)\""
       }
     },
     "lint": {

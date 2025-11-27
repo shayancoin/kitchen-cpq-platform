@@ -5,9 +5,13 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "nx:run-commands",
+      "executor": "@nx/js:tsc",
+      "dependsOn": ["proto-defs:codegen"],
+      "outputs": ["{workspaceRoot}/dist/apps/api"],
       "options": {
-        "command": "tsc -p apps/api/tsconfig.app.json"
+        "tsConfig": "apps/api/tsconfig.app.json",
+        "main": "apps/api/src/main.ts",
+        "outputPath": "dist/apps/api"
       }
     },
     "lint": {

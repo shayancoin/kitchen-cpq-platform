@@ -1,5 +1,6 @@
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
-import { IdentityTenancyModule } from './module';
+import { IdentityTenancyModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(IdentityTenancyModule);
@@ -7,4 +8,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-

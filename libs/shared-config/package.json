@@ -1,0 +1,10 @@
+{
+  "name": "@kitchen-cpq/shared-config",
+  "version": "0.0.1",
+  "private": true,
+  "main": "src/index.ts",
+  "type": "module",
+  "dependencies": {
+    "@kitchen-cpq/shared-validation": "workspace:*"
+  }
+}

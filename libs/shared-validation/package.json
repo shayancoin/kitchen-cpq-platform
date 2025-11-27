@@ -1,0 +1,10 @@
+{
+  "name": "@kitchen-cpq/shared-validation",
+  "version": "0.0.1",
+  "private": true,
+  "main": "src/index.ts",
+  "type": "module",
+  "dependencies": {
+    "zod": "^3.25.76"
+  }
+}

@@ -1,13 +1,15 @@
+import type { ParametricDelta, PriceSnapshot } from '@kitchen-cpq/shared-types';
+
 export type SDKCallbacks = {
-  onDeltaApplied?: (delta: unknown) => void;
-  onError?: (error: unknown) => void;
+  onDeltaApplied?: (delta: ParametricDelta) => void;
+  onError?: (error: Error | unknown) => void;
   onLoadComplete?: () => void;
-  onPriceChange?: (price: { total: number; currency: string }) => void;
+  onPriceChange?: (price: PriceSnapshot) => void;
 };
 
-export type ConfiguratorSession = {
+export interface ConfiguratorSession {
   destroy: () => void;
-};
+}
 
 export function init(
   container: HTMLElement,
