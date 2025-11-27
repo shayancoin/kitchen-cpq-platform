@@ -38,6 +38,15 @@ class SuggestLayoutsResponse(BaseModel):
 
 
 def build_demo_state(positions: List[int]) -> dict:
+    """
+    Builds a sample project state dictionary with cabinet entries placed at the given grid positions.
+    
+    Parameters:
+    	positions (List[int]): Grid slot indices; each index is multiplied by 600 to compute the cabinet's position along the wall (units in millimeters).
+    
+    Returns:
+    	demo_state (dict): A project state dictionary containing project metadata, room geometry, a `cabinets` list (one cabinet per provided position), constraint info, and an `updatedAt` timestamp.
+    """
     cabinets = []
     for idx, pos in enumerate(positions):
         cabinets.append(
@@ -81,7 +90,18 @@ def build_demo_state(positions: List[int]) -> dict:
 
 
 def solve_layout(goals: LayoutGoals, max_positions: int = 5) -> List[int]:
-    """Simple CP-SAT: choose cabinet occupancy on a 1D grid."""
+    """
+    Selects cabinet slot indices on a one-dimensional grid according to weighted layout goals.
+    
+    Optimizes a weighted trade-off between maximizing storage, minimizing cost, and preserving openness based on the provided LayoutGoals.
+    
+    Parameters:
+        goals (LayoutGoals): Weighting preferences for storage, budget, and openness.
+        max_positions (int): Number of discrete slots in the 1D grid to consider.
+    
+    Returns:
+        List[int]: Indices of slots chosen to be occupied. If the solver finds no feasible solution, returns [0, 1].
+    """
     model = cp_model.CpModel()
     occupancy = [model.NewBoolVar(f"slot_{i}") for i in range(max_positions)]
 
@@ -113,6 +133,15 @@ def solve_layout(goals: LayoutGoals, max_positions: int = 5) -> List[int]:
 
 
 def build_variants(req: SuggestLayoutsRequest) -> List[LayoutVariant]:
+    """
+    Generate layout variant(s) based on the provided request goals.
+    
+    Parameters:
+        req (SuggestLayoutsRequest): Request containing project identifier, optimization goals, and desired maximum number of layouts.
+    
+    Returns:
+        List[LayoutVariant]: A list of generated layout variants. Each variant includes a unique id, label, serialized layout state, and a set of evaluation scores; currently the function returns a single optimized variant derived from the request goals.
+    """
     slots = solve_layout(req.goals)
     state = build_demo_state(slots)
     variant = LayoutVariant(
@@ -132,10 +161,25 @@ app = FastAPI(title="Optimization Engine Service")
 
 @app.get("/healthz")
 async def healthz() -> dict:
+    """
+    Report service health status.
+    
+    Returns:
+        A dictionary with key `"status"` set to `"ok"` indicating the service is available.
+    """
     return {"status": "ok"}
 
 
 @app.post("/suggest-layouts", response_model=SuggestLayoutsResponse)
 async def suggest_layouts(payload: SuggestLayoutsRequest) -> SuggestLayoutsResponse:
+    """
+    Generate layout suggestions based on the provided request.
+    
+    Parameters:
+        payload (SuggestLayoutsRequest): Request specifying the project, optimization goals, and maximum number of layouts to return.
+    
+    Returns:
+        SuggestLayoutsResponse: Response containing up to the requested number of layout variants.
+    """
     variants = build_variants(payload)
     return SuggestLayoutsResponse(variants=variants[: payload.max_layouts])

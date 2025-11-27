@@ -30,6 +30,13 @@ type MutateResponse = {
   constraintSummary: ConstraintSummary;
 };
 
+/**
+ * Fetches the parametric state for a project from the configurator session API.
+ *
+ * @param projectId - The identifier of the project whose state to retrieve
+ * @returns The project's `ParametricState`
+ * @throws Error when the HTTP response is not ok
+ */
 async function fetchState(
   projectId: string
 ): Promise<ParametricState> {
@@ -46,6 +53,14 @@ async function fetchState(
   return res.json();
 }
 
+/**
+ * Apply parameter deltas to a project session on the configurator API and return the updated session state.
+ *
+ * @param projectId - The project identifier whose session will be mutated
+ * @param deltas - Array of parameter changes to apply to the session
+ * @returns The server's mutate response containing the updated `state` and `constraintSummary`
+ * @throws Error when the remote mutation request fails (non-OK HTTP response)
+ */
 async function mutateParameters(
   projectId: string,
   deltas: ParamDelta[]
@@ -68,6 +83,14 @@ async function mutateParameters(
   return res.json();
 }
 
+/**
+ * Render the configurator UI for a project, load its parametric state, and synchronize user edits with the server and 3D scene.
+ *
+ * Loads state for the provided projectId, initializes a kitchen 3D scene, lets the user adjust the primary cabinet's width and position (with debounced and immediate update paths), and displays constraint violations and a summary.
+ *
+ * @param params - Object containing the `projectId` to load and operate on
+ * @returns The configurator React element containing the parameters panel, 3D canvas, and constraints/summary panel
+ */
 export default function ConfigurePage({
   params,
 }: {

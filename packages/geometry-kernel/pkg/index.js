@@ -1,6 +1,10 @@
 const stateStore = new Map();
 let wasmModulePromise = null;
 
+/**
+ * Lazily loads and caches the geometry kernel module.
+ * @returns {Promise<Object>} The geometry kernel module object, or an empty object if loading fails.
+ */
 async function loadWasm() {
   if (wasmModulePromise) return wasmModulePromise;
   wasmModulePromise = import('./geometry_kernel.js').catch(() => ({}));
@@ -9,6 +13,14 @@ async function loadWasm() {
 
 const cloneState = (state) => JSON.parse(JSON.stringify(state));
 
+/**
+ * Set a top-level field on a cabinet in the state, ignoring the `parameters` field.
+ * Mutates the provided state in-place; does nothing if no cabinet with the given id exists.
+ * @param {object} state - State object containing a `cabinets` array.
+ * @param {string} cabinetId - Identifier of the cabinet to update.
+ * @param {string} key - Field name to set on the cabinet; updates are ignored when `key` is `'parameters'`.
+ * @param {*} value - Value to assign to the specified field.
+ */
 function setCabinetField(state, cabinetId, key, value) {
   const target = state.cabinets.find((c) => c.id === cabinetId);
   if (!target) return;
@@ -16,6 +28,11 @@ function setCabinetField(state, cabinetId, key, value) {
   target[key] = value;
 }
 
+/**
+ * Compute constraint violations for a design state.
+ * @param {Object} state - Design state object containing a `cabinets` array.
+ * @returns {{hasBlockingErrors: boolean, violations: Array<Object>}} An object with `hasBlockingErrors` set to `true` if any violation has severity `"error"`, and `violations` listing each detected constraint violation. Each violation contains `code`, `severity`, `message`, and optional `affectedCabinetIds` / `affectedGeometryIds`.
+ */
 function computeConstraints(state) {
   const violations = [];
   if (state.cabinets.length > 10) {
@@ -33,6 +50,12 @@ function computeConstraints(state) {
   };
 }
 
+/**
+ * Create and persist a new default project state containing a single room, one base cabinet, and initial constraints.
+ * @param {string} projectId - Unique identifier for the project.
+ * @param {string} tenantId - Identifier for the tenant/organization.
+ * @returns {Object} The created state object.
+ */
 function defaultState(projectId, tenantId) {
   const base = {
     projectId,
@@ -70,6 +93,19 @@ function defaultState(projectId, tenantId) {
   return base;
 }
 
+/**
+ * Apply a sequence of deltas to a cloned copy of the provided state, persist the result, and recompute constraints.
+ *
+ * Applies deltas that target cabinet fields (including nested `parameters` entries) and room perimeter wall endpoints.
+ * After applying all deltas this function recomputes the state's constraints, sets `updatedAt` to the current time,
+ * stores the new state in the internal state store keyed by `projectId`, and returns the updated state and constraints.
+ *
+ * @param {Object} state - The current project state to clone and modify.
+ * @param {Array<Object>} deltas - An array of delta objects. Each delta must include a `path` string and a `value`.
+ *                                Paths supported by this function include:
+ *                                - `cabinets.<cabinetId>.<field>` (or `cabinets.<cabinetId>.parameters.<...>` for nested params)
+ *                                - `room.perimeter.<wallId>.<start|end>`
+ * @returns {{ state: Object, constraints: Object }} The updated (stored) state and its recomputed constraints.
 function applyDeltaPure(state, deltas) {
   const next = cloneState(state);
   for (const delta of deltas) {
@@ -108,6 +144,12 @@ function applyDeltaPure(state, deltas) {
   return { state: next, constraints };
 }
 
+/**
+ * Apply a delta to a design state, using the WebAssembly implementation when available and falling back to the pure-JS updater.
+ * @param {Object} state - The current design state to which the delta will be applied.
+ * @param {Object} delta - The change description to apply to the state.
+ * @returns {Object} An object containing the resulting `state` and computed `constraints`.
+ */
 async function applyDelta(state, delta) {
   const wasm = await loadWasm();
   if (wasm.apply_delta) {
@@ -123,6 +165,11 @@ async function applyDelta(state, delta) {
   return applyDeltaPure(state, delta);
 }
 
+/**
+ * Validate a project's design and produce constraint evaluation results.
+ * @param {string} projectId - The project identifier whose design should be validated.
+ * @returns {{hasBlockingErrors: boolean, violations: Array}} An object describing constraint evaluation: `hasBlockingErrors` indicates whether any errors with blocking severity exist, and `violations` is an array of individual violation entries.
+ */
 async function validateDesign(projectId) {
   const wasm = await loadWasm();
   if (wasm.validate_design) {
@@ -137,14 +184,30 @@ async function validateDesign(projectId) {
   return computeConstraints(state);
 }
 
+/**
+ * Retrieve persisted project state from the in-memory store.
+ * @param {string} projectId - Project identifier.
+ * @returns {Object|undefined} The stored state for the project, or `undefined` if none exists.
+ */
 function getStoredState(projectId) {
   return stateStore.get(projectId);
 }
 
+/**
+ * Persist the given project state in the in-memory store under the provided project identifier.
+ * @param {string} projectId - The unique identifier for the project.
+ * @param {Object} state - The project state object to store (typically the full design state).
+ */
 function setStoredState(projectId, state) {
   stateStore.set(projectId, state);
 }
 
+/**
+ * Create and persist a default design state for the specified project and tenant.
+ * @param {string} projectId - The project identifier to associate the new state with.
+ * @param {string} tenantId - The tenant identifier for the new state.
+ * @returns {object} The created default state object stored for the project.
+ */
 function createDefaultState(projectId, tenantId) {
   return defaultState(projectId, tenantId);
 }

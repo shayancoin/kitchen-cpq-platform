@@ -6,6 +6,11 @@ client = TestClient(app)
 
 
 def test_suggest_layouts_returns_variant() -> None:
+  """
+  Verify the /suggest-layouts endpoint returns at least one layout variant containing a non-empty `state_json`.
+  
+  Sends a POST request with a sample `project_id`, goal weights, and `max_layouts`, then asserts the response status is 200, the `variants` list has length >= 1, and the first variant includes a non-empty `state_json`.
+  """
   response = client.post(
       "/suggest-layouts",
       json={
