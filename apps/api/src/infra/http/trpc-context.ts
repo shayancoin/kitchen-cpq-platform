@@ -20,6 +20,12 @@ const extractAuthCookie = (req: CreateExpressContextOptions['req']): string | un
   return auth ? decodeURIComponent(auth.split('=').slice(1).join('=')) : undefined;
 };
 
+/**
+ * Builds a TRPC context with user and tenant identity (and an optional session) derived from the incoming request.
+ *
+ * @param req - The Express request whose headers and cookies are inspected for `x-tenant-id`, `x-user-id`, an Authorization bearer token, or `auth_token` cookie.
+ * @returns An object containing `userId`, `tenantId`, and `session` (the `session` is present when a valid auth token was verified; otherwise `session` is `undefined`)
+ */
 export function createContext({ req }: CreateExpressContextOptions): TrpcContext {
   const config = loadConfig();
 
