@@ -51,6 +51,14 @@ async function fetchState(
   return res.json();
 }
 
+/**
+ * Apply a set of parameter deltas to the given project session on the configurator API.
+ *
+ * @param projectId - The project/session identifier to mutate
+ * @param deltas - Array of parameter changes (each delta specifies a parameter path and the new value)
+ * @returns The server's mutate response containing the updated parametric state and optional constraint summary
+ * @throws When the API responds with a non-OK status
+ */
 async function mutateParameters(
   projectId: string,
   deltas: ParamDelta[]
@@ -102,6 +110,13 @@ const computeDeltasToMatch = (
   return deltas;
 };
 
+/**
+ * Render the configurator page that loads and displays a project's parametric kitchen state,
+ * provides parameter controls and a 3D preview, and integrates a Design Copilot for AI-driven changes.
+ *
+ * @param params - Route parameters containing `projectId`, the identifier of the project to load
+ * @returns The React element for the configurator page UI
+ */
 export default function ConfigurePage({
   params,
 }: {
