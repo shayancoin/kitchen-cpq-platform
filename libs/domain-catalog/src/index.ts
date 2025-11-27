@@ -21,14 +21,36 @@ export interface CatalogDraft {
   rules: RuleDslBlob[];
 }
 
+/**
+ * Validate and parse a raw value into a CatalogPayload.
+ *
+ * @param raw - The untrusted value to validate and convert into a catalog payload
+ * @returns The validated CatalogPayload
+ * @throws When `raw` does not conform to the CatalogPayload schema
+ */
 export function parseCatalogPayload(raw: unknown): CatalogPayload {
   return CatalogPayloadSchema.parse(raw);
 }
 
+/**
+ * Compute a stable content hash for a catalog payload.
+ *
+ * @param payload - The catalog payload to hash; it is serialized deterministically before hashing
+ * @returns Hex-encoded SHA-256 hash of a stable serialization of `payload`
+ */
 export function computeCatalogHash(payload: CatalogPayload): string {
   return createHash('sha256').update(stringify(payload)).digest('hex');
 }
 
+/**
+ * Builds a CatalogVersion from a CatalogDraft and associated metadata.
+ *
+ * @param input.draft - The draft that provides tenant, label and payload used to construct the version
+ * @param input.payloadUri - URI where the catalog payload is stored
+ * @param input.createdBy - UserId of the actor that created the version
+ * @param input.timestamp - Optional ISO datetime to use as `createdAt`; when omitted the current time is used
+ * @returns The constructed CatalogVersion, including an assigned `id` (generated if the draft has none) and a SHA-256 `hash` of the payload
+ */
 export function buildCatalogVersion(input: {
   draft: CatalogDraft;
   payloadUri: string;
@@ -50,6 +72,11 @@ export function buildCatalogVersion(input: {
   };
 }
 
+/**
+ * Create a snapshot reference containing the version's id and hash.
+ *
+ * @returns A CatalogSnapshotRef containing the version's `id` and `hash`
+ */
 export function snapshotRefFromVersion(version: CatalogVersion): CatalogSnapshotRef {
   return {
     id: version.id,
@@ -103,6 +130,16 @@ export interface PublishSnapshotResult {
   correlationId: ULID;
 }
 
+/**
+ * Build a catalog version from a draft, persist it, and produce a snapshot reference with the correlation id.
+ *
+ * @param repo - Repository used to persist the catalog snapshot
+ * @param draft - Draft describing the catalog version to publish
+ * @param payloadUri - URI where the catalog payload is stored
+ * @param createdBy - User id that performs the publish
+ * @param correlationId - Correlation identifier for this publish operation
+ * @returns The saved catalog version, its snapshot reference, and the provided correlation id
+ */
 export function publishSnapshot(
   repo: InMemoryCatalogRepository,
   draft: CatalogDraft,

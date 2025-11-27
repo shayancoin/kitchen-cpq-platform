@@ -86,6 +86,15 @@ function instrumentActivity<TArgs extends unknown[], TResult>(
   };
 }
 
+/**
+ * Starts an HTTP server that exposes health and Prometheus-compatible activity metrics.
+ *
+ * The server serves two endpoints:
+ * - GET /health: returns JSON `{ status: "ok" }`.
+ * - GET /metrics: returns Prometheus-formatted metrics for each instrumented activity, including throughput, error counts, duration histogram buckets (including `+Inf`), duration sum, and duration count (duration values are in milliseconds).
+ *
+ * @param port - TCP port to listen on (defaults to 9464)
+ */
 function startMetricsServer(port = 9464) {
   const server = http.createServer((req, res) => {
     if (req.url === '/health') {
@@ -130,6 +139,11 @@ function startMetricsServer(port = 9464) {
   });
 }
 
+/**
+ * Starts a bridge that listens to the `orders.lifecycle` Kafka topic and initiates a KitchenOrderWorkflow for valid `quote.confirmed` events.
+ *
+ * Subscribes to the topic, validates incoming payloads for the expected `quote.confirmed` shape, attaches OpenTelemetry attributes and spans, logs processing events, and starts a Temporal workflow using the quote identifiers and catalog. If workflow start fails the error is recorded on the span and rethrown from the subscription handler.
+ */
 function wireKafkaBridge() {
   const client = new Client();
 
@@ -205,6 +219,11 @@ function wireKafkaBridge() {
   });
 }
 
+/**
+ * Establishes a Temporal connection, creates and starts a worker for the kitchen-order task queue, and initializes the Kafka bridge and metrics server.
+ *
+ * Uses the TEMPORAL_ADDRESS and TEMPORAL_NAMESPACE environment variables (with defaults 'localhost:7233' and 'default') to configure the Temporal connection and task routing, and METRICS_PORT to configure the metrics HTTP server.
+ */
 async function runWorker() {
   const connection = await NativeConnection.connect({
     address: process.env.TEMPORAL_ADDRESS ?? 'localhost:7233'

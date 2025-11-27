@@ -39,6 +39,12 @@ type ConfirmPayload = {
 };
 type EventPayload = QuotePayload | ConfirmPayload;
 
+/**
+ * Type guard that determines whether an event payload contains a `quote` property.
+ *
+ * @param p - The event payload to inspect
+ * @returns `true` if `p` has a `quote` property, `false` otherwise
+ */
 function isQuotePayload(p: EventPayload): p is QuotePayload {
   return (p as QuotePayload).quote !== undefined;
 }

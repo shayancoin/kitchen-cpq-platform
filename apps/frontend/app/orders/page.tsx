@@ -5,6 +5,15 @@ import { trpc } from '../../src/lib/trpc-client';
 
 type OrderEvent = { label: string; at: string };
 
+/**
+ * Render the Orders page showing a project-specific order workflow timeline.
+ *
+ * The component fetches and displays the timeline for the current project ID (editable via the Project ID input)
+ * and updates the timeline automatically by polling every 4 seconds. While data is loading it shows a loading message;
+ * once loaded it renders the timeline events with their timestamps.
+ *
+ * @returns The Orders page as a JSX element
+ */
 export default function OrdersPage() {
   const [projectId, setProjectId] = useState('demo-project');
 

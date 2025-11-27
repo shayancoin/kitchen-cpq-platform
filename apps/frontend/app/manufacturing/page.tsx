@@ -7,6 +7,13 @@ import type { ManufacturingJob } from '@kitchen-cpq/shared-types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
+/**
+ * Render the Manufacturing page showing current manufacturing jobs.
+ *
+ * Fetches job data from the reporting API (polled every 3 seconds) and renders loading and error states, plus a list of jobs with each job's id, last-updated time, and status badge.
+ *
+ * @returns The React element that renders the Manufacturing page UI.
+ */
 export default function ManufacturingPage() {
   const trpc = useMemo(() => createTrpcClient({ baseUrl: API_BASE }), []);
 
