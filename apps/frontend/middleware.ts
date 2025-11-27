@@ -37,6 +37,11 @@ function extractSubdomain(request: NextRequest): string | null {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const subdomain = extractSubdomain(request);
+  const authToken = request.cookies.get('auth_token')?.value;
+  const requiresAuth =
+    pathname.startsWith('/cpq') ||
+    pathname.startsWith('/(dealer)') ||
+    pathname.startsWith('/(admin)');
 
   if (subdomain) {
     if (pathname.startsWith('/admin')) {
@@ -46,6 +51,12 @@ export function middleware(request: NextRequest) {
     if (pathname === '/') {
       return NextResponse.rewrite(new URL(`/s/${subdomain}`, request.url));
     }
+  }
+
+  if (requiresAuth && !authToken && pathname !== '/login') {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('next', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

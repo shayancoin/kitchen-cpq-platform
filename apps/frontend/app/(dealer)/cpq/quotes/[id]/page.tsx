@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Shell } from '@kitchen-cpq/ui-kit';
 import {
   init as initConfigurator,
@@ -47,7 +47,7 @@ function ConfiguratorWrapper({
     });
 
     return () => {
-      sessionRef.current?.destroy();
+      sessionRef.current?.destroy?.();
     };
     // session is managed inside this effect; omit from deps to avoid re-init loops.
   }, [quoteId, tenantId, locale, authToken, callbacks]);

@@ -3,8 +3,10 @@ import { getTrpcClient } from '../../../src/lib/trpc-server';
 
 export default async function CpqDashboardPage() {
   const trpc = getTrpcClient();
-  const quote = await trpc.cpq.getQuoteForProject.query({ projectId: 'demo-project' });
-  const badge = await trpc.ui.getConstraintBadge.query({ projectId: 'demo-project' });
+  const [quote, badge] = await Promise.all([
+    trpc.cpq.getQuoteForProject.query({ projectId: 'demo-project' }),
+    trpc.ui.getConstraintBadge.query({ projectId: 'demo-project' })
+  ]);
 
   return (
     <main className="p-6 space-y-4">

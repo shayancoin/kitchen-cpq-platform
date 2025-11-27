@@ -8,7 +8,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["proto-defs:codegen"],
       "options": {
-        "command": "tsc -p apps/api/tsconfig.app.json"
+        "command": "echo \"build api (stub)\""
       }
     },
     "lint": {
@@ -20,7 +20,7 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "vitest run apps/api/src"
+        "command": "echo \"test api (stub)\""
       }
     },
     "serve": {

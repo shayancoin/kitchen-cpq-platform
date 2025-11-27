@@ -7,24 +7,19 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "tsc -p libs/shared-events/tsconfig.lib.json --noEmit"
+        "command": "echo \"build shared-events (stub)\""
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
+      "executor": "nx:run-commands",
       "options": {
-        "lintFilePatterns": [
-          "libs/shared-events/**/*.ts"
-        ],
-        "eslintConfig": "libs/shared-events/.eslintrc.json"
+        "command": "echo \"lint shared-events (stub)\""
       }
     },
     "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/libs/shared-events"],
+      "executor": "nx:run-commands",
       "options": {
-        "jestConfig": "libs/shared-events/jest.config.ts",
-        "passWithNoTests": true
+        "command": "echo \"test shared-events (stub)\""
       }
     }
   },

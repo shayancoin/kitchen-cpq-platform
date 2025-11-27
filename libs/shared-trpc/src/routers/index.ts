@@ -8,9 +8,11 @@ import type {
   CopilotMessage,
   LayoutGoals,
   LayoutVariant,
+  LayoutVariantId,
   ParamDelta,
   ParametricState,
   ProjectId,
+  QuoteId,
   QuoteSummary,
   Session,
   Tenant,
@@ -142,7 +144,7 @@ const createQuoteSummary = (state: ParametricState): QuoteSummary => {
     hash: 'demo-hash'
   };
   return {
-    id: `quote-${state.projectId}` as ULID,
+    id: `quote-${state.projectId}` as QuoteId,
     projectId: state.projectId,
     tenantId: state.tenantId,
     status: 'draft',
@@ -245,7 +247,7 @@ const configuratorRouter = router({
       const baseState = buildParametricState(input.projectId as ProjectId, tenant.id);
       const variants: LayoutVariant[] = [
         {
-          id: 'variant-1' as ULID,
+          id: 'variant-1' as LayoutVariantId,
           label: 'Galley',
           state: baseState,
           objectiveScores: {
@@ -256,7 +258,7 @@ const configuratorRouter = router({
           }
         },
         {
-          id: 'variant-2' as ULID,
+          id: 'variant-2' as LayoutVariantId,
           label: 'Island',
           state: { ...baseState, updatedAt: nowIso() },
           objectiveScores: {

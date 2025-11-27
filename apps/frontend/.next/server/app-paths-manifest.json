@@ -1,0 +1,12 @@
+{
+  "/(admin)/cpq/catalog/page": "app/(admin)/cpq/catalog/page.js",
+  "/(dealer)/cpq/quotes/[id]/page": "app/(dealer)/cpq/quotes/[id]/page.js",
+  "/(dealer)/cpq/quotes/page": "app/(dealer)/cpq/quotes/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/cpq/configure/[projectId]/page": "app/cpq/configure/[projectId]/page.js",
+  "/cpq/dashboard/page": "app/cpq/dashboard/page.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/s/[subdomain]/page": "app/s/[subdomain]/page.js"
+}

@@ -1,0 +1,12 @@
+{
+  "/(admin)/cpq/catalog/page": "/cpq/catalog",
+  "/(dealer)/cpq/quotes/[id]/page": "/cpq/quotes/[id]",
+  "/(dealer)/cpq/quotes/page": "/cpq/quotes",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/cpq/configure/[projectId]/page": "/cpq/configure/[projectId]",
+  "/cpq/dashboard/page": "/cpq/dashboard",
+  "/login/page": "/login",
+  "/page": "/",
+  "/s/[subdomain]/page": "/s/[subdomain]"
+}

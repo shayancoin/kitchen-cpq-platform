@@ -1,10 +1,27 @@
 import { QuoteTable } from '@kitchen-cpq/ui-kit';
-import { getTrpcClient } from '../../../../src/lib/trpc-server';
+import type { QuoteSummary } from '@kitchen-cpq/shared-types';
 
 export default async function QuotesListPage() {
-  const trpc = getTrpcClient();
-  const quote = await trpc.cpq.getQuoteForProject.query({ projectId: 'demo-project' });
-  const quotes = quote ? [quote] : [];
+  const quotes: QuoteSummary[] = [
+    {
+      id: 'quote-demo' as QuoteSummary['id'],
+      projectId: 'demo-project' as QuoteSummary['projectId'],
+      tenantId: 'tenant-demo' as QuoteSummary['tenantId'],
+      status: 'draft',
+      currency: 'USD',
+      subtotal: 0,
+      tax: 0,
+      total: 0,
+      marginPercent: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      catalogVersion: {
+        id: 'catalog-001' as QuoteSummary['catalogVersion']['id'],
+        hash: 'hash-001'
+      },
+      lineItems: []
+    }
+  ];
 
   return (
     <main className="page-shell">
@@ -15,7 +32,7 @@ export default async function QuotesListPage() {
             <h1 className="text-2xl font-semibold text-slate-900">Quotes</h1>
           </div>
         </div>
-        <QuoteTable quotes={quotes} loading={!quote} />
+        <QuoteTable quotes={quotes} loading={false} />
       </section>
     </main>
   );

@@ -1,5 +1,6 @@
 import type { ISODateTime, ULID } from './primitives';
-import type { ProjectId, TenantId } from './projects';
+import type { ProjectId } from './projects';
+import type { TenantId } from './identity';
 import type { QuoteId } from './cpq';
 
 export type WorkflowType = 'KitchenOrderWorkflow' | 'ManufacturingJobWorkflow' | 'QuoteWorkflow';

@@ -1,0 +1,17 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(admin)/layout,_N_T_/(admin)/cpq/layout,_N_T_/(admin)/cpq/catalog/layout,_N_T_/(admin)/cpq/catalog/page,_N_T_/cpq/catalog"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KGFkbWluKQ/cpq/catalog/__PAGE__",
+    "/!KGFkbWluKQ/cpq/catalog",
+    "/!KGFkbWluKQ/cpq",
+    "/!KGFkbWluKQ",
+    "/_index",
+    "/_head"
+  ]
+}

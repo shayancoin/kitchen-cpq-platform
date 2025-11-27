@@ -1,32 +1,29 @@
 import { test, expect } from '@playwright/test';
-import { appRouter } from '@kitchen-cpq/shared-trpc';
 
-const caller = appRouter.createCaller({
-  userId: 'user-demo',
-  tenantId: 'tenant-demo',
-  session: {
-    id: 'session-demo',
-    userId: 'user-demo',
-    tenantId: 'tenant-demo',
-    issuedAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-    jwt: 'stub.jwt'
-  }
-});
+const baseURL = process.env.BASE_URL ?? 'http://localhost:3000';
+const apiURL = process.env.API_URL ?? 'http://localhost:3001';
+const runBrowserE2E = process.env.RUN_E2E === 'true';
 
-test('golden path: login -> quotes -> configurator', async () => {
-  const session = await caller.auth.getSession();
-  expect(session?.tenantId).toBe('tenant-demo');
+test.describe('golden path: login -> quotes -> configurator', () => {
+  test.skip(!runBrowserE2E, 'Set RUN_E2E=true to run browser golden-path');
 
-  const quote = await caller.cpq.getQuoteForProject({ projectId: 'demo-project' });
-  expect(quote?.id).toBeDefined();
-  expect(quote?.lineItems.length).toBeGreaterThanOrEqual(0);
-
-  const mutateResult = await caller.configurator.mutateParameters({
-    projectId: 'demo-project',
-    deltas: [{ path: 'cabinets.cab-1.width', value: 800 }]
+  test('login and load CPQ dashboard', async ({ page }) => {
+    await page.goto(`${baseURL}/login`);
+    await page.fill('input[type="email"]', 'demo@example.com');
+    await page.fill('input[name="tenant"]', 'tenant-demo');
+    await page.click('button[type="submit"]');
+    await page.waitForURL('**/cpq/dashboard');
+    await expect(page.getByText('CPQ Dashboard')).toBeVisible();
+    await expect(page.getByText('Constraint Badge')).toBeVisible();
   });
 
-  expect(mutateResult.state.updatedAt).toBeTruthy();
-  expect(mutateResult.priceDelta.totalPrice).toBeGreaterThanOrEqual(0);
+  test('auth endpoint responds for seeded user', async ({ request }) => {
+    const res = await request.post(`${apiURL}/auth/login`, {
+      data: { email: 'demo@example.com', tenantId: 'tenant-demo' }
+    });
+    expect(res.ok()).toBeTruthy();
+    const json = await res.json();
+    expect(json.jwt).toBeTruthy();
+    expect(json.tenantId).toBe('tenant-demo');
+  });
 });

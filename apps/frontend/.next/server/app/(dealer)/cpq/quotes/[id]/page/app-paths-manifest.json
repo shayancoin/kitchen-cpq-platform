@@ -1,0 +1,3 @@
+{
+  "/(dealer)/cpq/quotes/[id]/page": "app/(dealer)/cpq/quotes/[id]/page.js"
+}

@@ -28,10 +28,11 @@ export class ConfiguratorGatewayService {
     };
   }
 
-  applyDeltas(state: ParametricState, _deltas: ParamDelta[]): ParametricState {
+  applyDeltas(state: ParametricState, deltas: ParamDelta[]): ParametricState {
+    const touched = deltas.length > 0;
     return {
       ...state,
-      updatedAt: nowIso()
+      updatedAt: touched ? nowIso() : state.updatedAt
     };
   }
 
