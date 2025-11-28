@@ -11,15 +11,12 @@
     "@nestjs/common": "^11.1.9",
     "@nestjs/core": "^11.1.9",
     "@nestjs/platform-express": "^11.1.9",
-<<<<<<< Updated upstream
     "@nestjs/microservices": "^11.1.9",
     "@kitchen-cpq/instrumentation-otel": "workspace:*",
     "@kitchen-cpq/shared-auth": "workspace:*",
     "@kitchen-cpq/shared-config": "workspace:*",
     "@kitchen-cpq/shared-trpc": "workspace:*",
     "@kitchen-cpq/shared-types": "workspace:*",
-=======
->>>>>>> Stashed changes
     "@trpc/server": "^10.45.2",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.52.1",
