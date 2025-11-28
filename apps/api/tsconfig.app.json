@@ -5,8 +5,17 @@
     "outDir": "../../dist/apps/api",
     "rootDir": "./src",
     "types": ["node", "express"],
+<<<<<<< Updated upstream
     "esModuleInterop": true
+=======
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+>>>>>>> Stashed changes
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "../../libs/**/*.ts",
+    "../../packages/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }
