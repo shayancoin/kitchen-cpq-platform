@@ -12,6 +12,18 @@ export class TrpcModule implements NestModule {
       createContext
     }) as RequestHandler;
 
-    consumer.apply(handler).forRoutes({ path: '/trpc', method: RequestMethod.ALL });
+    // Nest middleware does not trim the prefix like Express' `app.use('/trpc', ...)` does.
+    // Strip the leading /trpc so tRPC receives the bare procedure path (e.g., ui.getDashboardKpis).
+    const stripPrefix: RequestHandler = (req, res, next) => {
+      if (req.url?.startsWith('/trpc')) {
+        req.url = req.url.replace(/^\/trpc/, '') || '/';
+      }
+      return handler(req, res, next);
+    };
+
+    consumer.apply(stripPrefix).forRoutes(
+      { path: '/trpc', method: RequestMethod.ALL },
+      { path: '/trpc/(.*)', method: RequestMethod.ALL }
+    );
   }
 }

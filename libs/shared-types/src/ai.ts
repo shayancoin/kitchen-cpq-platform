@@ -1,6 +1,8 @@
 import type { ISODateTime } from './primitives';
-import type { ConstraintSummary, LayoutGoals, ParamDelta, ParametricState } from './configuration';
-import type { ProjectId, Role } from './projects';
+import type { LayoutGoals, ParamDelta, ParametricState } from './configuration';
+import type { ConstraintSummary } from './constraints';
+import type { ProjectId } from './projects';
+import type { Role } from './identity';
 
 export type CopilotRole = 'user' | 'assistant' | 'system' | 'tool';
 

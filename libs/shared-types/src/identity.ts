@@ -17,12 +17,30 @@ export type Role =
   | 'manufacturing_engineer'
   | 'admin';
 
+export type ThemePreset = 'default' | 'tangerine' | 'brutalist';
+
+export interface TenantBranding {
+  logoUrl?: string;
+  primaryColor: string;
+  accentColor: string;
+  surfaceColor?: string;
+  subtleBorderColor?: string;
+  navGradient?: string;
+  constraintTokens?: {
+    ok: string;
+    warning: string;
+    error: string;
+  };
+  preset?: ThemePreset;
+}
+
 export interface Tenant {
   id: TenantId;
   slug: string;
   displayName: string;
   createdAt: ISODateTime;
   isActive: boolean;
+  branding?: TenantBranding;
 }
 
 export interface User {
@@ -43,4 +61,3 @@ export interface Session {
   expiresAt: ISODateTime;
   jwt: string;
 }
-

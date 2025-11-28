@@ -16,3 +16,10 @@ export interface CpqSummaryBarState {
   hasBlockingErrors: boolean;
 }
 
+export interface DashboardKpis {
+  openQuotes: number;
+  conversionRate: number;
+  pipelineValue: number;
+  avgMargin: number;
+  revenueTrend?: { label: string; value: number }[];
+}

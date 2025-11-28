@@ -29,7 +29,8 @@ const buildHeaders = (): Record<string, string> | undefined => {
 
 if (process.env.OTEL_LOG_LEVEL) {
   const logLevelKey = process.env.OTEL_LOG_LEVEL.toUpperCase();
-  const level = (DiagLogLevel as Record<string, DiagLogLevel>)[logLevelKey] ?? DiagLogLevel.INFO;
+  const level =
+    (DiagLogLevel as unknown as Record<string, DiagLogLevel>)[logLevelKey] ?? DiagLogLevel.INFO;
   diag.setLogger(new DiagConsoleLogger(), level);
 }
 
@@ -43,13 +44,13 @@ const sdk = new NodeSDK({
     url: process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT,
     headers: buildHeaders(),
   }),
-  metricReader: new PeriodicExportingMetricReader({
+  metricReader: (new PeriodicExportingMetricReader({
     exporter: new OTLPMetricExporter({
       url: process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT,
       headers: buildHeaders(),
     }),
     exportIntervalMillis: Number(process.env.OTEL_METRIC_EXPORT_INTERVAL ?? 60000),
-  }),
+  }) as unknown) as any,
   instrumentations: getNodeAutoInstrumentations({
     '@opentelemetry/instrumentation-http': {
       enabled: true,
@@ -57,10 +58,14 @@ const sdk = new NodeSDK({
   }),
 });
 
-sdk.start().catch((err) => {
-  // eslint-disable-next-line no-console
-  console.error('Failed to start OpenTelemetry SDK', err);
-});
+void (async () => {
+  try {
+    await sdk.start();
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to start OpenTelemetry SDK', err);
+  }
+})();
 
 const shutdown = async () => {
   try {

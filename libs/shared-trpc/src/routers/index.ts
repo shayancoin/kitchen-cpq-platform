@@ -16,13 +16,18 @@ import type {
   ParametricState,
   ProjectId,
   QuoteId,
+  QuoteStatus,
   QuoteSummary,
   Session,
   Tenant,
+  TenantBranding,
+  ThemePreset,
   ULID,
   User,
-  CpqSummaryBarState
+  CpqSummaryBarState,
+  DashboardKpis
 } from '@kitchen-cpq/shared-types';
+import type { PriceSnapshot } from '@kitchen-cpq/shared-types';
 import { CabinetInstanceId, CatalogVersionId, TenantId, UserId } from '@kitchen-cpq/shared-types';
 import { protectedProcedure, publicProcedure, router, type TrpcContext } from '../trpc';
 import {
@@ -45,6 +50,41 @@ type BaseEntities = {
 const nowIso = (): string => new Date().toISOString();
 const AI_BASE = process.env.AI_AGENT_URL ?? 'http://localhost:3017';
 
+const presetBranding: Record<ThemePreset, TenantBranding> = {
+  default: {
+    primaryColor: '#0f172a',
+    accentColor: '#2563eb',
+    surfaceColor: '#ffffff',
+    subtleBorderColor: '#e2e8f0',
+    navGradient: 'linear-gradient(180deg, #0b1220 0%, #0f172a 60%, #0b1220 100%)',
+    constraintTokens: { ok: '#16a34a', warning: '#f59e0b', error: '#dc2626' },
+    preset: 'default'
+  },
+  tangerine: {
+    primaryColor: '#0f172a',
+    accentColor: '#f97316',
+    surfaceColor: '#0b1220',
+    subtleBorderColor: '#1f2937',
+    navGradient: 'linear-gradient(180deg, #0b1220 0%, #111827 50%, #0b1220 100%)',
+    constraintTokens: { ok: '#22c55e', warning: '#fbbf24', error: '#ef4444' },
+    preset: 'tangerine',
+    logoUrl: '/brand/tenant-logo.svg'
+  },
+  brutalist: {
+    primaryColor: '#111111',
+    accentColor: '#fde047',
+    surfaceColor: '#ffffff',
+    subtleBorderColor: '#111111',
+    navGradient: 'linear-gradient(180deg, #000000 0%, #1f1f1f 60%, #0a0a0a 100%)',
+    constraintTokens: { ok: '#15803d', warning: '#ca8a04', error: '#dc2626' },
+    preset: 'brutalist'
+  }
+};
+
+const buildBranding = (preset: ThemePreset = 'tangerine'): TenantBranding => ({
+  ...presetBranding[preset]
+});
+
 const resolveBaseEntities = (ctx: TrpcContext): BaseEntities => {
   const tenantId = (ctx.tenantId ?? ('tenant-demo' as TenantId)) as TenantId;
   const userId = (ctx.userId ?? ('user-demo' as UserId)) as UserId;
@@ -54,7 +94,8 @@ const resolveBaseEntities = (ctx: TrpcContext): BaseEntities => {
     slug: 'tenant-demo',
     displayName: 'Demo Tenant',
     createdAt: nowIso(),
-    isActive: true
+    isActive: true,
+    branding: buildBranding('tangerine')
   };
 
   const user: User = {
@@ -62,7 +103,7 @@ const resolveBaseEntities = (ctx: TrpcContext): BaseEntities => {
     tenantId,
     email: 'demo@example.com',
     displayName: 'Demo User',
-    roles: ['dealer'],
+    roles: ['dealer', 'catalog_engineer', 'manufacturing_engineer', 'admin'],
     createdAt: nowIso(),
     lastLoginAt: nowIso()
   };
@@ -153,16 +194,16 @@ const applyDeltas = (state: ParametricState, deltas: ParamDelta[]): ParametricSt
         continue;
       }
 
-      if (first && mutableCabinetKeySchema.safeParse(first).success) {
-        const key = first as MutableCabinetKey;
-        try {
-          const validated = parseCabinetField(key, delta.value);
-          target[key] = validated;
-        } catch (err) {
-          if (err instanceof ZodError) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: err.errors.map((e) => e.message).join('; ') });
-          }
-          throw err;
+          if (first && mutableCabinetKeySchema.safeParse(first).success) {
+            const key = first as MutableCabinetKey;
+            try {
+              const validated = parseCabinetField(key, delta.value);
+              (target as Record<MutableCabinetKey, typeof validated>)[key] = validated as never;
+            } catch (err) {
+              if (err instanceof ZodError) {
+                throw new TRPCError({ code: 'BAD_REQUEST', message: err.errors.map((e) => e.message).join('; ') });
+              }
+              throw err;
         }
       }
     }
@@ -209,11 +250,45 @@ const createQuoteSummary = (state: ParametricState): QuoteSummary => {
   };
 };
 
+const toPriceSnapshot = (quote: QuoteSummary): PriceSnapshot => ({
+  currency: quote.currency,
+  total: quote.total,
+  subtotal: quote.subtotal,
+  tax: quote.tax,
+  marginPercent: quote.marginPercent,
+  updatedAt: quote.updatedAt
+});
+
+const buildQuoteList = (tenantId: TenantId): QuoteSummary[] => {
+  const projects: { id: ProjectId; status: QuoteStatus; margin: number; factor: number }[] = [
+    { id: 'proj-galley' as ProjectId, status: 'draft', margin: 0.22, factor: 1 },
+    { id: 'proj-island' as ProjectId, status: 'submitted', margin: 0.18, factor: 1.2 },
+    { id: 'proj-builder' as ProjectId, status: 'approved', margin: 0.24, factor: 1.4 },
+    { id: 'proj-manufacturing' as ProjectId, status: 'submitted', margin: 0.2, factor: 1.1 }
+  ];
+
+  return projects.map((p, idx) => {
+    const base = buildParametricState(p.id, tenantId);
+    const quote = createQuoteSummary({ ...base, projectId: p.id, updatedAt: nowIso() });
+    const multiplier = p.factor + idx * 0.05;
+    return {
+      ...quote,
+      status: (p.status as QuoteStatus) ?? 'draft',
+      subtotal: quote.subtotal * multiplier,
+      tax: quote.tax * multiplier,
+      total: quote.total * multiplier,
+      marginPercent: Math.round(p.margin * 100),
+      updatedAt: nowIso()
+    };
+  });
+};
+
 const authRouter = router({
   getSession: publicProcedure.query(({ ctx }) => {
     const { session } = resolveBaseEntities(ctx);
     return session;
   }),
+  getCurrentUser: protectedProcedure.query(({ ctx }) => resolveBaseEntities(ctx).user),
   loginWithOAuthCallback: publicProcedure
     .input(z.object({ code: z.string(), state: z.string().optional() }))
     .mutation(({ ctx, input }) => {
@@ -312,12 +387,53 @@ const configuratorRouter = router({
 });
 
 const cpqRouter = router({
+  listQuotes: protectedProcedure.query(({ ctx }): QuoteSummary[] => {
+    const { tenant } = resolveBaseEntities(ctx);
+    return buildQuoteList(tenant.id);
+  }),
+  priceDelta: protectedProcedure
+    .input(
+      z.object({
+        projectId: z.string(),
+        deltas: z.array(z.custom<ParamDelta>()).optional()
+      })
+    )
+    .mutation(({ input, ctx }) => {
+      const { tenant } = resolveBaseEntities(ctx);
+      const baseState = buildParametricState(input.projectId as ProjectId, tenant.id);
+      const targetState =
+        input.deltas && input.deltas.length > 0 ? applyDeltas(baseState, input.deltas as ParamDelta[]) : baseState;
+
+      const baselineQuote = createQuoteSummary(baseState);
+      const targetQuote = createQuoteSummary(targetState);
+      const totalDelta = targetQuote.total - baselineQuote.total;
+      const subtotalDelta = (targetQuote.subtotal ?? targetQuote.total) - (baselineQuote.subtotal ?? baselineQuote.total);
+
+      return {
+        baseline: toPriceSnapshot(baselineQuote),
+        current: toPriceSnapshot(targetQuote),
+        delta: {
+          currency: targetQuote.currency,
+          totalDelta,
+          subtotalDelta
+        }
+      };
+    }),
+  getQuote: protectedProcedure
+    .input(z.object({ quoteId: z.string() }))
+    .query(({ input, ctx }): QuoteSummary | null => {
+      const { tenant } = resolveBaseEntities(ctx);
+      const quotes = buildQuoteList(tenant.id);
+      return quotes.find((q) => q.id === input.quoteId) ?? null;
+    }),
   getQuoteForProject: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .query(({ input, ctx }): QuoteSummary | null => {
       const { tenant } = resolveBaseEntities(ctx);
       const state = buildParametricState(input.projectId as ProjectId, tenant.id);
-      return createQuoteSummary(state);
+      const quotes = buildQuoteList(tenant.id);
+      const existing = quotes.find((q) => q.projectId === input.projectId);
+      return existing ?? createQuoteSummary(state);
     }),
   recomputeQuote: protectedProcedure
     .input(z.object({ projectId: z.string() }))
@@ -435,6 +551,23 @@ const uiRouter = router({
         ? 'Blocking constraints present'
         : 'All constraints satisfied'
     })),
+  getDashboardKpis: protectedProcedure.query(({ ctx }): DashboardKpis => {
+    const quotes = buildQuoteList(resolveBaseEntities(ctx).tenant.id);
+    const openQuotes = quotes.filter((q) => q.status !== 'approved').length;
+    const approved = quotes.filter((q) => q.status === 'approved').length;
+    const pipelineValue = quotes.reduce((acc, q) => acc + q.total, 0);
+    const conversionRate = quotes.length ? Math.round((approved / quotes.length) * 100) : 0;
+    const avgMargin = quotes.length
+      ? Math.round(quotes.reduce((acc, q) => acc + q.marginPercent, 0) / quotes.length)
+      : 0;
+    return {
+      openQuotes,
+      conversionRate,
+      pipelineValue,
+      avgMargin,
+      revenueTrend: quotes.map((q) => ({ label: q.projectId, value: Math.round(q.total) }))
+    };
+  }),
   getCpqSummaryBar: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .query(({ input, ctx }): CpqSummaryBarState => {
@@ -447,6 +580,10 @@ const uiRouter = router({
         currency: quote.currency,
         hasBlockingErrors: baseConstraintSummary.hasBlockingErrors
       };
+    }),
+  getTenantBranding: protectedProcedure.query(({ ctx }): TenantBranding => {
+    const { tenant } = resolveBaseEntities(ctx);
+    return tenant.branding ?? buildBranding();
     })
 });
 

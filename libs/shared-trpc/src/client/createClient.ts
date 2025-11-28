@@ -9,6 +9,7 @@ type CreateClientOptions = {
 export const createTrpcClient = (options: CreateClientOptions = {}) => {
   const url = `${options.baseUrl ?? 'http://localhost:3001'}/trpc`;
   return createTRPCProxyClient<AppRouter>({
+    transformer: undefined as AppRouter['_def']['_config']['transformer'],
     links: [
       httpBatchLink({
         url,
