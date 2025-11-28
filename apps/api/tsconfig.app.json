@@ -4,9 +4,9 @@
     "module": "commonjs",
     "outDir": "../../dist/apps/api",
     "rootDir": "./src",
-    "types": ["node"]
+    "types": ["node", "express"],
+    "esModuleInterop": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }
-

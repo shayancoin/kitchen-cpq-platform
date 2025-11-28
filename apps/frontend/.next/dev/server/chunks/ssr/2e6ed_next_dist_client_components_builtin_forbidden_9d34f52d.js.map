@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/shayanbozorgmanesh/Developer/kitchen-cpq-platform/node_modules/.pnpm/next%4016.0.4_%40babel%2Bcore%407.28.5_%40opentelemetry%2Bapi%401.9.0_%40playwright%2Btest%401.57.0_babel-plugin-_mtygajf7wc73773hd4vvgqkli4/node_modules/next/src/client/components/builtin/forbidden.tsx"],"sourcesContent":["import { HTTPAccessErrorFallback } from '../http-access-fallback/error-fallback'\n\nexport default function Forbidden() {\n  return (\n    <HTTPAccessErrorFallback\n      status={403}\n      message=\"This page could not be accessed.\"\n    />\n  )\n}\n"],"names":["Forbidden","HTTPAccessErrorFallback","status","message"],"mappings":";;;+BAEA,WAAA;;;eAAwBA;;;;+BAFgB;AAEzB,SAASA;IACtB,OAAA,WAAA,GACE,CAAA,GAAA,YAAA,GAAA,EAACC,eAAAA,uBAAuB,EAAA;QACtBC,QAAQ;QACRC,SAAQ;;AAGd","ignoreList":[0]}}]
+}

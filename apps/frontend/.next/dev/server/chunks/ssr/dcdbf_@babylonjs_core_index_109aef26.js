@@ -1,0 +1,63 @@
+module.exports = [
+"[project]/node_modules/.pnpm/@babylonjs+core@8.39.0/node_modules/@babylonjs/core/index.js [app-ssr] (ecmascript, async loader)", ((__turbopack_context__) => {
+
+__turbopack_context__.v((parentImport) => {
+    return Promise.all([
+  "server/chunks/ssr/dcdbf_@babylonjs_core_1125dd67._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Misc_b0547968._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Maths_ff483afa._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Engines_thinEngine_9ab353f4.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Engines_Extensions_4982c9c5._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Engines_WebGPU_9a654c7c._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Engines_webgpuEngine_7c637aa5.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Engines_47e6897c._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Animations_cdb8c3de._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Bones_e2aae81f._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Materials_Textures_a01ec251._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Materials_standardMaterial_ca9d6b87.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Materials_PBR_c9641283._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Materials_Node_Blocks_Fragment_9a1de494._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Materials_Node_Blocks_Dual_0ab9fd26._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Materials_Node_Blocks_PBR_35b96fd1._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Materials_Node_Blocks_ccd94f32._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Materials_Node_nodeMaterial_67c5ba2e.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Materials_Node_3813c474._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Materials_index_34b0729a.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Materials_26dd7200._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_PostProcesses_c64e17c6._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Rendering_a26fb458._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_DeviceInput_1fde1c49._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Lights_c40bf1d5._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_FrameGraph_9401d370._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Shaders_ShadersInclude_9ecec0aa._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Shaders_8daee619._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Meshes_abstractMesh_61e6a5e1.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Meshes_mesh_1f58a30e.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Meshes_Builders_f5a873ad._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Meshes_Node_50497bb1._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Meshes_95994c95._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Culling_0be9ce90._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Cameras_1fe5c9f1._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_ShadersWGSL_da236245._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_scene_7e0eb12e.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Loading_e696def7._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Audio_32a54acd._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_AudioV2_e93676a4._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Behaviors_3ed464e9._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_XR_f639e606._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Gizmos_1b987188._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Debug_d92cf139._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Physics_f26eb66c._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_FlowGraph_dd16076c._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Layers_8ee5a165._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Particles_Node_94726c62._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Particles_a7eb640a._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_Sprites_e925bbd5._.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_index_4d720b8b.js",
+  "server/chunks/ssr/dcdbf_@babylonjs_core_9f112d9e._.js"
+].map((chunk) => __turbopack_context__.l(chunk))).then(() => {
+        return parentImport("[project]/node_modules/.pnpm/@babylonjs+core@8.39.0/node_modules/@babylonjs/core/index.js [app-ssr] (ecmascript)");
+    });
+});
+}),
+];

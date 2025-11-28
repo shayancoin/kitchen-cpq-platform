@@ -1,5 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import type { CatalogSnapshotRef, ParametricState, QuoteSummary, TenantId } from '@kitchen-cpq/shared-types';
+import type {
+  CatalogSnapshotRef,
+  CatalogVersionId,
+  ParametricState,
+  ProjectId,
+  QuoteId,
+  QuoteSummary,
+  TenantId
+} from '@kitchen-cpq/shared-types';
 
 const nowIso = () => new Date().toISOString();
 
@@ -7,9 +15,9 @@ const nowIso = () => new Date().toISOString();
 export class CpqGatewayService {
   buildParametricState(projectId: string, tenantId: TenantId): ParametricState {
     return {
-      projectId,
+      projectId: projectId as ProjectId,
       tenantId,
-      catalogVersionId: 'catalog-001',
+      catalogVersionId: 'catalog-001' as CatalogVersionId,
       room: {
         id: 'room-1',
         perimeter: [],
@@ -23,10 +31,13 @@ export class CpqGatewayService {
   }
 
   buildQuote(projectId: string, tenantId: TenantId): QuoteSummary {
-    const catalogVersion: CatalogSnapshotRef = { id: 'catalog-001', hash: 'hash-001' };
+    const catalogVersion: CatalogSnapshotRef = {
+      id: 'catalog-001' as CatalogVersionId,
+      hash: 'hash-001'
+    };
     return {
-      id: `quote-${projectId}`,
-      projectId,
+      id: `quote-${projectId}` as QuoteId,
+      projectId: projectId as ProjectId,
       tenantId,
       status: 'draft',
       currency: 'USD',

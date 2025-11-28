@@ -1,14 +1,15 @@
 @import "tailwindcss";
 
 :root {
+  --brand-primary: #0f172a;
+  --brand-accent: #f97316;
+  --brand-surface: #f8fafc;
+  --brand-border-subtle: #e2e8f0;
   color-scheme: light;
 }
 
 body {
-  @apply bg-gray-50 text-slate-900;
-  min-height: 100vh;
-}
-
-.page-shell {
-  @apply flex min-h-screen bg-gray-50 text-slate-900;
+  @apply min-h-screen antialiased;
+  background: var(--brand-surface);
+  color: var(--brand-primary);
 }

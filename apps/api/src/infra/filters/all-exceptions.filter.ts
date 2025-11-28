@@ -1,7 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { context, trace } from '@opentelemetry/api';
 import { Request, Response } from 'express';
-import { InstrumentationLogger } from '@lib/instrumentation-otel';
+import { InstrumentationLogger } from '@kitchen-cpq/instrumentation-otel';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -18,7 +18,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const res = exception.getResponse();
-      message = typeof res === 'string' ? res : (res as Record<string, unknown>).message ?? message;
+      if (typeof res === 'string' || Array.isArray(res)) {
+        message = res;
+      } else if (res && typeof res === 'object' && 'message' in res) {
+        const responseMessage = (res as Record<string, unknown>).message;
+        if (typeof responseMessage === 'string' || Array.isArray(responseMessage)) {
+          message = responseMessage;
+        }
+      }
     }
 
     const span = trace.getSpan(context.active());

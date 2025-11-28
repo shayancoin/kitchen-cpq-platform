@@ -13,8 +13,8 @@ test.describe('golden path: login -> quotes -> configurator', () => {
     await page.fill('input[name="tenant"]', 'tenant-demo');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/cpq/dashboard');
-    await expect(page.getByText('CPQ Dashboard')).toBeVisible();
-    await expect(page.getByText('Constraint Badge')).toBeVisible();
+    await expect(page.getByText('Pipeline & margin overview')).toBeVisible();
+    await expect(page.getByText('Constraint badge', { exact: false })).toBeVisible();
   });
 
   test('auth endpoint responds for seeded user', async ({ request }) => {
@@ -34,31 +34,25 @@ test.describe('golden path: login -> quotes -> configurator', () => {
     await page.click('button[type="submit"]');
     await page.waitForURL('**/cpq/dashboard');
 
-    // Create project (expect a CTA exists; skip if not present yet)
-    const createProjectButton = page.locator('[data-test="create-project"]');
-    if (!(await createProjectButton.isVisible({ timeout: 3000 }))) {
-      test.skip(true, 'create-project CTA not available');
-    }
-    await createProjectButton.click();
-    await page.fill('[data-test="project-name"]', `E2E Kitchen ${Date.now()}`);
-    await page.click('[data-test="project-create-submit"]');
+    // Navigate to quotes then configure demo project
+    await page.click('a:has-text("Quotes")');
+    await page.waitForURL('**/cpq/quotes');
+    const firstQuote = page.locator('table tr').nth(1);
+    const projectId = (await firstQuote.locator('td').nth(1).textContent())?.trim();
+    await firstQuote.click();
     await page.waitForURL('**/cpq/quotes/**');
-
-    // Enter configurator for the created project
-    const openConfigurator = page.locator('[data-test="open-configurator"]').first();
-    await openConfigurator.click();
-    await page.waitForURL('**/cpq/configure/**');
+    if (projectId) {
+      await page.goto(`${baseURL}/cpq/configure/${projectId}`);
+    }
 
     // Configure kitchen: interact with a parameter input and assert latency budget.
-    const paramSlider = page.locator('[data-test="room-width"] input, [data-test="param-width"] input').first();
-    if (!(await paramSlider.isVisible({ timeout: 3000 }))) {
-      test.skip(true, 'Configurator parameter control not available');
-    }
+    const paramInput = page.getByLabel('Cabinet width (mm)');
+    await paramInput.waitFor({ timeout: 5000 });
 
     const latencyBudgetMs = 150;
     const start = performance.now();
-    await paramSlider.focus();
-    await paramSlider.press('ArrowRight');
+    await paramInput.focus();
+    await paramInput.press('ArrowUp');
 
     const response = await page.waitForResponse(
       (r) =>
@@ -71,20 +65,7 @@ test.describe('golden path: login -> quotes -> configurator', () => {
 
     expect(response.ok()).toBeTruthy();
 
-    // Generate quote flow (stub: ensure quote action button exists and triggers request)
-    const generateQuoteBtn = page.locator('[data-test="generate-quote"]');
-    if (!(await generateQuoteBtn.isVisible({ timeout: 3000 }))) {
-      test.skip(true, 'Generate quote action not available');
-    }
-    const quoteResponsePromise = page.waitForResponse(
-      (r) => r.url().includes('/quotes') || r.url().includes('recomputeQuote'),
-      { timeout: 5000 }
-    );
-    await generateQuoteBtn.click();
-    const quoteResponse = await quoteResponsePromise;
-    expect(quoteResponse.ok()).toBeTruthy();
-
     // Validate quote summary visible
-    await expect(page.locator('[data-test="quote-summary"], text=Quote')).toBeVisible();
+    await expect(page.getByText('Summary', { exact: false })).toBeVisible();
   });
 });

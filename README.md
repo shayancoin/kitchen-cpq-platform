@@ -135,6 +135,13 @@ External donor templates are cloned into `external-templates/` and treated as re
 
 `kitchen-cpq-platform` is the single source of truth; upstream templates are not used as submodules.
 
+## Step 5 frontend synthesis (current)
+
+- `apps/frontend` now uses the shared `@kitchen-cpq/ui-kit` AppShell, constraint badges, margin badges, and TanStack table wrappers across `/cpq/dashboard`, `/cpq/quotes`, `/cpq/quotes/[id]`, `/cpq/configure/[projectId]`, `/catalog`, and `/manufacturing`.
+- Tenant branding (logo/colors + constraint tokens) is returned via `tenancy.getCurrentTenant` and applied through the UI kit theme provider (supports Tangerine/Brutalist presets).
+- CPQ routes embed the Babylon viewer from `packages/3d-engine` and the AI Copilot rail from Step 4.
+- UI/BFF latency budgets are tracked in `tools/scripts/latency-budgets.json` (`cpq.listQuotes`, `cpq.getQuote`, `ui.getDashboardKpis`, `ui.getConstraintBadge`, `ui.getCpqSummaryBar`, `catalogAdmin.listCatalogVersions`, `reporting.getManufacturingJobs`).
+
 ---
 
 ## 4. Getting started (Step 1 skeleton)
@@ -159,5 +166,9 @@ node_modules/.bin/nx run-many --target=build --all
 All build targets either type-check (`apps/api`, TS services, `libs/shared-types`) or are explicit stubs (`frontend`, 3D engine, Python/Rust packages) that complete successfully.
 
 ---
+
+## Dependency notes
+
+- `ulid` remains on `^2.x` for now to avoid breaking API/ESM changes in v3; upgrade when callers are adjusted.
 
 This completes **Step 1 – Foundational Platform & Monorepo**: the workspace, core projects, shared types, proto contracts, and infra/tooling skeleton are wired and compiling, ready for parametric engines, 3D integration, CPQ logic, and workflows in subsequent steps.

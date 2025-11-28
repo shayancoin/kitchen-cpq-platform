@@ -1,66 +1,41 @@
 'use client';
 
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { createTrpcClient } from '@kitchen-cpq/shared-trpc';
-import type { ManufacturingJob } from '@kitchen-cpq/shared-types';
+import { BomTable, Card, CncJobCard, SectionHeader } from '@kitchen-cpq/ui-kit';
+import { AppChrome } from '../../src/components/AppChrome';
+import type { BomItem } from '@kitchen-cpq/shared-types';
+import { trpc } from '../../src/lib/trpc-client';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const demoBom: BomItem[] = [
+  { id: 'bom-1', sku: 'PANEL-3/4', description: '3/4" panel', quantity: 12, uom: 'panel' },
+  { id: 'bom-2', sku: 'HARDWARE-HINGE', description: 'Soft-close hinge', quantity: 24, uom: 'hardware' }
+];
 
-/**
- * Renders the Manufacturing page showing a polled factory job queue and its statuses.
- *
- * Displays a header and a list of manufacturing jobs fetched from the reporting API. Shows a loading message while fetching, an error message on failure, and for each job displays its id, last-updated time, and status badge.
- *
- * @returns The component's rendered JSX element containing the manufacturing queue UI.
- */
 export default function ManufacturingPage() {
-  const trpc = useMemo(() => createTrpcClient({ baseUrl: API_BASE }), []);
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['manufacturing-jobs'],
-    queryFn: () => trpc.reporting.getManufacturingJobs.query(),
-    refetchInterval: 3000
-  });
+  const { data } = trpc.reporting.getManufacturingJobs.useQuery(undefined, { refetchInterval: 4000 });
+  const jobs = data?.jobs ?? [];
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-4 px-6 py-10">
-      <header>
-        <p className="text-xs uppercase tracking-wide text-slate-500">Manufacturing</p>
-        <h1 className="text-2xl font-semibold text-slate-900">
-          Factory queue (Temporal/Kafka stub)
-        </h1>
-        <p className="text-sm text-slate-600">
-          Polls the API reporting endpoint to show job states derived from workflow events.
-        </p>
-      </header>
+    <AppChrome>
+      <div className="space-y-6">
+        <SectionHeader
+          label="Manufacturing"
+          title="Order queues & job status"
+          description="Temporal/Kafka-backed feed of jobs with BOM preview."
+        />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        {isLoading && <p className="text-sm text-slate-600">Loading jobs…</p>}
-        {error && (
-          <p className="text-sm text-red-600">Failed to load jobs: {error.message}</p>
-        )}
-        {!isLoading && !error && (
-          <ul className="space-y-3">
-            {(data?.jobs ?? []).map((job) => (
-              <li
-                key={job.id}
-                className="flex items-center justify-between rounded-md border border-slate-100 px-3 py-2"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">{job.id}</p>
-                  <p className="text-xs text-slate-500">
-                    Updated {new Date(job.updatedAt).toLocaleTimeString()}
-                  </p>
-                </div>
-                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  {job.status}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </main>
+        <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+          <Card title="Job queue" subtitle="reporting.getManufacturingJobs">
+            <div className="grid gap-3 md:grid-cols-2">
+              {jobs.map((job) => (
+                <CncJobCard key={job.id} job={job} />
+              ))}
+            </div>
+          </Card>
+          <Card title="BOM preview" subtitle="Stubbed items">
+            <BomTable items={demoBom} />
+          </Card>
+        </div>
+      </div>
+    </AppChrome>
   );
 }

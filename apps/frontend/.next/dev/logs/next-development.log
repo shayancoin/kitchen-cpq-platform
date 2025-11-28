@@ -1,0 +1,53 @@
+[00:00:00.987] Server  WARN     ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+[00:00:01.107] Server  LOG      ✓ Ready in 834ms
+[00:00:06.863] Server  LOG      ○ Compiling /cpq/quotes/[id] ...
+[00:00:14.831] Server  WARN    Error: Route "/cpq/quotes/[id]" used `params.id`. `params` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+[00:00:14.897] Server  ERROR    ⨯ TRPCClientError: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "quoteId"
+    ],
+    "message": "Required"
+  }
+]
+[00:00:15.208] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:15.415] Browser ERROR   uncaughtError: TRPCClientError: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "quoteId"
+    ],
+    "message": "Required"
+  }
+]
+[00:00:27.371] Server  WARN    Error: Route "/cpq/quotes/[id]" used `params.id`. `params` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+[00:00:27.391] Server  ERROR    ⨯ TRPCClientError: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "quoteId"
+    ],
+    "message": "Required"
+  }
+]
+[00:00:27.512] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:27.639] Browser ERROR   uncaughtError: TRPCClientError: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "quoteId"
+    ],
+    "message": "Required"
+  }
+]
+[00:00:31.089] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:35.814] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold

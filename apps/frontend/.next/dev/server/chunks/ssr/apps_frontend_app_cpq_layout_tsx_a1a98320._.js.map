@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/shayanbozorgmanesh/Developer/kitchen-cpq-platform/apps/frontend/app/cpq/layout.tsx"],"sourcesContent":["import type { ReactNode } from 'react';\n\nexport default function CpqLayout({ children }: { children: ReactNode }) {\n  return <>{children}</>;\n}\n"],"names":[],"mappings":";;;;;;AAEe,SAAS,UAAU,EAAE,QAAQ,EAA2B;IACrE,qBAAO;kBAAG;;AACZ"}}]
+}

@@ -1,0 +1,5 @@
+{
+  "/cpq/dashboard/page": "app/cpq/dashboard/page.js",
+  "/cpq/quotes/[id]/page": "app/cpq/quotes/[id]/page.js",
+  "/cpq/quotes/page": "app/cpq/quotes/page.js"
+}

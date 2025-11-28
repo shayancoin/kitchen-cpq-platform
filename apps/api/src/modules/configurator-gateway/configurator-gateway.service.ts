@@ -4,7 +4,10 @@ import type {
   LayoutVariant,
   ParamDelta,
   ParametricState,
-  TenantId
+  TenantId,
+  ProjectId,
+  CatalogVersionId,
+  LayoutVariantId
 } from '@kitchen-cpq/shared-types';
 
 const nowIso = () => new Date().toISOString();
@@ -13,9 +16,9 @@ const nowIso = () => new Date().toISOString();
 export class ConfiguratorGatewayService {
   buildState(projectId: string, tenantId: TenantId): ParametricState {
     return {
-      projectId,
+      projectId: projectId as ProjectId,
       tenantId,
-      catalogVersionId: 'catalog-001',
+      catalogVersionId: 'catalog-001' as CatalogVersionId,
       room: {
         id: 'room-1',
         perimeter: [],
@@ -66,7 +69,7 @@ export class ConfiguratorGatewayService {
   layoutVariants(state: ParametricState): LayoutVariant[] {
     return [
       {
-        id: 'layout-a',
+        id: 'layout-a' as LayoutVariantId,
         label: 'Galley',
         state,
         objectiveScores: {

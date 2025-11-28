@@ -29,7 +29,7 @@
       }
     },
     "serve": {
-      "executor": "@nx/next:dev-server",
+      "executor": "@nx/next:server",
       "options": {
         "buildTarget": "frontend:build",
         "dev": true

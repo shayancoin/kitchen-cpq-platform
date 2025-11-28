@@ -5,13 +5,11 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "nx:run-commands",
       "dependsOn": ["proto-defs:codegen"],
       "outputs": ["{workspaceRoot}/dist/apps/api"],
       "options": {
-        "tsConfig": "apps/api/tsconfig.app.json",
-        "main": "apps/api/src/main.ts",
-        "outputPath": "dist/apps/api"
+        "command": "tsc -p apps/api/tsconfig.app.json"
       }
     },
     "lint": {
@@ -29,7 +27,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nest start --watch"
+        "command": "TS_NODE_PROJECT=apps/api/tsconfig.app.json TS_NODE_COMPILER_OPTIONS=\"{\\\"module\\\":\\\"commonjs\\\"}\" NODE_OPTIONS=\"--require ts-node/register/transpile-only --require tsconfig-paths/register\" ts-node apps/api/src/main.ts"
       }
     }
   },
